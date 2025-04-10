@@ -12,19 +12,22 @@ import subprocess
 def main():
     print("Setting up NLTK and TextBlob resources...")
     
-    # Create directories for NLTK data if they don't exist
-    nltk_data_dir = os.path.expanduser("~/nltk_data")
+    # Create directories for NLTK data in the current directory
+    nltk_data_dir = os.path.join(os.getcwd(), "nltk_data")
     if not os.path.exists(nltk_data_dir):
         os.makedirs(nltk_data_dir, exist_ok=True)
+    
+    # Set the NLTK data path to the current directory
+    nltk.data.path.append(nltk_data_dir)
     
     # Download NLTK resources
     try:
         print("Downloading NLTK punkt tokenizer...")
-        nltk.download('punkt', quiet=True)
+        nltk.download('punkt', download_dir=nltk_data_dir, quiet=True)
         print("Downloading NLTK stopwords...")
-        nltk.download('stopwords', quiet=True)
+        nltk.download('stopwords', download_dir=nltk_data_dir, quiet=True)
         print("Downloading NLTK brown corpus...")
-        nltk.download('brown', quiet=True)
+        nltk.download('brown', download_dir=nltk_data_dir, quiet=True)
     except Exception as e:
         print(f"Error downloading NLTK resources: {str(e)}")
         print("You may need to manually download these resources.")
