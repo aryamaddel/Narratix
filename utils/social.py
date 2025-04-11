@@ -963,6 +963,149 @@ def extract_from_twitter(url, soup):
     }
 
 
+def extract_from_linkedin(url, soup):
+    """Extract content from a LinkedIn profile or company page"""
+    platform_config = PLATFORMS["linkedin"]
+
+    # Extract bio/about content
+    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
+    bio = " ".join(bio_texts) if bio_texts else ""
+
+    # Extract posts
+    posts = extract_post_texts(soup, platform_config["post_selectors"])
+
+    # Extract follower count
+    page_text = soup.get_text()
+    follower_count = extract_count_from_text(
+        page_text, platform_config["follower_patterns"]
+    )
+
+    # Estimate engagement level
+    engagement_level = "Medium"  # Default for LinkedIn
+    if "comments" in page_text.lower() and "likes" in page_text.lower():
+        engagement_level = "High"
+
+    # Estimate posting frequency
+    posting_frequency = estimate_posting_frequency(posts, page_text)
+
+    return {
+        "platform": "LinkedIn",
+        "type": platform_config["type"],
+        "bio": bio,
+        "posts": posts,
+        "followers": follower_count,
+        "engagement": engagement_level,
+        "frequency": posting_frequency,
+    }
+
+
+def extract_from_youtube(url, soup):
+    """Extract content from a YouTube channel"""
+    platform_config = PLATFORMS["youtube"]
+
+    # Extract bio/about content
+    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
+    bio = " ".join(bio_texts) if bio_texts else ""
+
+    # Extract video titles as posts
+    posts = extract_post_texts(soup, platform_config["post_selectors"])
+
+    # Extract follower count
+    page_text = soup.get_text()
+    follower_count = extract_count_from_text(
+        page_text, platform_config.get("follower_patterns", [])
+    )
+
+    # If no follower count found using patterns, try specific YouTube selectors
+    if not follower_count:
+        # Look for the specific YouTube subscribers element
+        subscriber_elements = soup.select(
+            ".yt-core-attributed-string.yt-content-metadata-view-model-wiz__metadata-text"
+        )
+        if (
+            not subscriber_elements
+        ):  # Try alternative selectors if first one doesn't work
+            subscriber_elements = soup.select(
+                ".yt-content-metadata-view-model-wiz__metadata-text"
+            )
+
+        for element in subscriber_elements:
+            element_text = element.get_text().strip()
+            if "subscriber" in element_text.lower():
+                number_match = re.search(r"([\d,.]+[kKmM]?)", element_text)
+                if number_match:
+                    follower_count = number_match.group(1)
+                    break
+
+    # YouTube typically has medium to high engagement
+    engagement_level = "Medium"
+    if "likes" in page_text.lower() and "comments" in page_text.lower():
+        engagement_level = "High"
+
+    # Estimate posting frequency
+    posting_frequency = estimate_posting_frequency(posts, page_text)
+
+    return {
+        "platform": "YouTube",
+        "type": platform_config["type"],
+        "bio": bio,
+        "posts": posts,
+        "subscribers": follower_count,  # Use subscribers instead of followers for YouTube
+        "engagement": engagement_level,
+        "frequency": posting_frequency,
+    }
+
+
+def extract_generic_content(url, soup, platform_name):
+    """Generic extraction for platforms without specific implementations"""
+    if not platform_name or platform_name not in PLATFORMS:
+        # Try to identify the platform
+        platform_name = identify_platform(url)
+        if not platform_name:
+            return None
+
+    platform_config = PLATFORMS.get(platform_name, {})
+    if not platform_config:
+        return None
+
+    # Extract bio/about content
+    bio_texts = extract_text_from_selectors(
+        soup, platform_config.get("bio_selectors", [])
+    )
+    bio = " ".join(bio_texts) if bio_texts else ""
+
+    # Extract posts
+    posts = extract_post_texts(soup, platform_config.get("post_selectors", []))
+
+    # Extract follower count
+    page_text = soup.get_text()
+    follower_count = extract_count_from_text(
+        page_text, platform_config.get("follower_patterns", [])
+    )
+
+    # Default engagement and frequency
+    engagement_level = "Medium"
+    posting_frequency = estimate_posting_frequency(posts, page_text)
+
+    # Create the result dictionary with special handling for YouTube
+    result = {
+        "platform": platform_name.capitalize(),
+        "type": platform_config.get("type", "profile"),
+        "bio": bio,
+        "posts": posts,
+        "engagement": engagement_level,
+        "frequency": posting_frequency,
+    }
+
+    # Use "subscribers" field name for YouTube, "followers" for everything else
+    if platform_name.lower() == "youtube":
+        result["subscribers"] = follower_count
+    else:
+        result["followers"] = follower_count
+
+    return result
+
+
 # ---- Main Extraction Function ----
 
 
