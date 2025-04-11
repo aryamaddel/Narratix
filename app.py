@@ -1,13 +1,17 @@
 from urllib.parse import urlparse
 from flask import Flask, render_template, request, jsonify
 
-# Import utility modules
-# Remove this import
-# from utils.analyzer import analyze_content
-# Import Gemini search utilities (now includes all social functionality)
-from utils.brand_analyzer import search_website_content, search_social_media, GEMINI_AVAILABLE
-from utils.brand_analyzer import generate_brand_story, generate_visual_profile, generate_consistency_score
-from utils.brand_analyzer import get_social_profiles, analyze_content  # Added analyze_content here
+# Import utility modules from the modularized structure
+from utils.brand_analyzer import (
+    search_website_content, 
+    search_social_media,
+    get_social_profiles,
+    GEMINI_AVAILABLE
+)
+from utils.generation.story_generator import generate_brand_story
+from utils.generation.visual_generator import generate_visual_profile
+from utils.generation.score_generator import generate_consistency_score
+from utils.analysis.content_analyzer import analyze_content
 
 # Initialize Flask app
 app = Flask(__name__)
