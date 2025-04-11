@@ -340,10 +340,10 @@ def extract_count_from_text(text, patterns):
 
                     # If value exists, return it
                     if count_text:
-                        logger.info(f"Found follower count: {count_text} using pattern: {pattern}")
+
                         return count_text
         except Exception as e:
-            logger.error(f"Error in follower extraction with pattern {pattern}: {str(e)}")
+
             continue
 
     # More aggressive search for numbers near follower-related words
@@ -351,13 +351,13 @@ def extract_count_from_text(text, patterns):
     for keyword in follower_keywords:
         try:
             # Find sentences containing the keyword
-            sentences = re.split(r'[.!?]', text)
+            sentences = re.split(r"[.!?]", text)
             for sentence in sentences:
                 if keyword.lower() in sentence.lower():
                     # Look for numbers in this sentence
-                    number_match = re.search(r'([\d,.]+[kKmM]?)', sentence)
+                    number_match = re.search(r"([\d,.]+[kKmM]?)", sentence)
                     if number_match:
-                        logger.info(f"Found follower count with keyword {keyword}: {number_match.group(1)}")
+
                         return number_match.group(1)
         except Exception:
             continue
@@ -372,22 +372,22 @@ def normalize_follower_count(count_text):
 
     try:
         # Remove any non-numeric characters except K, M, k, m, comma and dot
-        clean_count = re.sub(r'[^\d,.KkMm]', '', count_text.strip())
+        clean_count = re.sub(r"[^\d,.KkMm]", "", count_text.strip())
 
         # Handle K/M notation
-        if 'k' in clean_count.lower():
+        if "k" in clean_count.lower():
             # Remove the K and multiply by 1000
-            numeric_part = re.sub(r'[kK]', '', clean_count)
+            numeric_part = re.sub(r"[kK]", "", clean_count)
             return f"{float(numeric_part.replace(',', '')) * 1000:.0f}"
-        elif 'm' in clean_count.lower():
+        elif "m" in clean_count.lower():
             # Remove the M and multiply by 1000000
-            numeric_part = re.sub(r'[mM]', '', clean_count)
+            numeric_part = re.sub(r"[mM]", "", clean_count)
             return f"{float(numeric_part.replace(',', '')) * 1000000:.0f}"
         else:
             # Just return the cleaned number
             return clean_count
     except Exception as e:
-        logger.error(f"Error normalizing follower count '{count_text}': {str(e)}")
+
         return count_text
 
 
@@ -853,21 +853,24 @@ def extract_from_facebook(url, soup):
 
     # If still no follower count, try more specific selectors
     if not follower_count:
-        try:
-            # Try common Facebook follower/like display elements
-            follower_elements = soup.select("[data-key='followers_count']") or \
-                               soup.select(".clearfix ._4bl9") or \
-                               soup.select("._4-u2._6590._3xaf._4-u8")
 
-            for element in follower_elements:
-                element_text = element.get_text()
-                if any(keyword in element_text.lower() for keyword in ["follower", "like", "follow"]):
-                    number_match = re.search(r'([\d,.]+[kKmM]?)', element_text)
-                    if number_match:
-                        follower_count = number_match.group(1)
-                        break
-        except Exception as e:
-            logger.error(f"Error in Facebook specialized follower extraction: {str(e)}")
+        # Try common Facebook follower/like display elements
+        follower_elements = (
+            soup.select("[data-key='followers_count']")
+            or soup.select(".clearfix ._4bl9")
+            or soup.select("._4-u2._6590._3xaf._4-u8")
+        )
+
+        for element in follower_elements:
+            element_text = element.get_text()
+            if any(
+                keyword in element_text.lower()
+                for keyword in ["follower", "like", "follow"]
+            ):
+                number_match = re.search(r"([\d,.]+[kKmM]?)", element_text)
+                if number_match:
+                    follower_count = number_match.group(1)
+                    break
 
     # Estimate engagement level based on likes and comments
     engagement_indicators = ["like", "comment", "share"]
@@ -913,21 +916,21 @@ def extract_from_twitter(url, soup):
 
     # If still no follower count, try more specific Twitter selectors
     if not follower_count:
-        try:
-            # Try common Twitter follower count elements
-            follower_elements = soup.select('[data-testid="UserProfileHeader_Items"]') or \
-                               soup.select('[data-nav="followers"]') or \
-                               soup.select(".ProfileNav-item--followers")
 
-            for element in follower_elements:
-                element_text = element.get_text()
-                if "follower" in element_text.lower():
-                    number_match = re.search(r'([\d,.]+[kKmM]?)', element_text)
-                    if number_match:
-                        follower_count = number_match.group(1)
-                        break
-        except Exception as e:
-            logger.error(f"Error in Twitter specialized follower extraction: {str(e)}")
+        # Try common Twitter follower count elements
+        follower_elements = (
+            soup.select('[data-testid="UserProfileHeader_Items"]')
+            or soup.select('[data-nav="followers"]')
+            or soup.select(".ProfileNav-item--followers")
+        )
+
+        for element in follower_elements:
+            element_text = element.get_text()
+            if "follower" in element_text.lower():
+                number_match = re.search(r"([\d,.]+[kKmM]?)", element_text)
+                if number_match:
+                    follower_count = number_match.group(1)
+                    break
 
     # Estimate engagement from retweets, likes, and replies
     engagement_indicators = ["retweet", "like", "reply", "favorite"]
@@ -1082,8 +1085,10 @@ def extract_social_content(social_links):
                         )
 
                 # Normalize follower count if present
-                if 'followers' in platform_data:
-                    platform_data['followers'] = normalize_follower_count(platform_data['followers'])
+                if "followers" in platform_data:
+                    platform_data["followers"] = normalize_follower_count(
+                        platform_data["followers"]
+                    )
 
                 # Add URL and real_data flag if not already set
                 if "url" not in platform_data:
