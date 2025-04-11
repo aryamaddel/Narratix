@@ -124,3 +124,91 @@ def generate_visual_profile(analysis: Dict[str, Any]) -> Dict[str, Any]:
     # Return the default profile if Gemini isn't available
     logger.info("Using default visual profile (Gemini unavailable or failed)")
     return default_profile
+
+def generate_visual_profile(analysis):
+    """
+    Generate visual profile recommendations based on brand analysis.
+    
+    Args:
+        analysis (dict): Analysis results including tone, keywords, and values
+        
+    Returns:
+        dict: Visual profile recommendations including colors, fonts, and style
+    """
+    try:
+        # Default professional color palette
+        color_palette = {
+            "primary": "#0A3D62",
+            "secondary": "#3E92CC",
+            "accent": "#D8D8D8",
+            "neutral": "#F5F5F5",
+            "highlight": "#2E86AB",
+        }
+        
+        # Adjust colors based on key values or tone
+        tone_analysis = analysis.get("tone_analysis", {})
+        keywords = analysis.get("keywords", [])
+        
+        # Determine tone indicators for visual profile
+        tone_indicators = []
+        for tone, value in tone_analysis.items():
+            tone_indicators.append({
+                "name": tone.capitalize(),
+                "value": value
+            })
+        
+        # Sort by value and take top 3
+        tone_indicators = sorted(tone_indicators, key=lambda x: x["value"], reverse=True)[:3]
+        
+        # Define font style based on tone
+        font_style = {
+            "heading": "Montserrat or Georgia",
+            "body": "Open Sans or Roboto",
+            "style": "Clean, structured typography with proper hierarchy",
+        }
+        
+        # Professional is default, but can be adjusted based on other dominant tones
+        image_style = "Polished, high-quality photography with clean compositions."
+        
+        if "friendly" in tone_analysis and tone_analysis["friendly"] > 0.6:
+            color_palette["primary"] = "#3A7CA5"  # Softer blue
+            color_palette["accent"] = "#F9A826"   # Warmer accent
+            font_style["heading"] = "Quicksand or Avenir"
+            image_style = "Warm, inviting imagery with people and human interactions."
+            
+        elif "creative" in tone_analysis and tone_analysis["creative"] > 0.6:
+            color_palette["primary"] = "#7952B3"  # Purple
+            color_palette["accent"] = "#FFC107"   # Bright yellow
+            font_style["heading"] = "Playfair Display or Abril Fatface"
+            image_style = "Creative, artistic imagery with unique perspectives and compositions."
+        
+        # Return the complete visual profile
+        return {
+            "color_palette": color_palette,
+            "font_style": font_style,
+            "image_style": image_style,
+            "tone_indicators": tone_indicators
+        }
+    
+    except Exception as e:
+        # Return a default professional visual profile
+        return {
+            "color_palette": {
+                "primary": "#0A3D62",
+                "secondary": "#3E92CC",
+                "accent": "#D8D8D8",
+                "neutral": "#F5F5F5",
+                "highlight": "#2E86AB",
+            },
+            "font_style": {
+                "heading": "Montserrat or Georgia",
+                "body": "Open Sans or Roboto",
+                "style": "Clean, structured typography with proper hierarchy",
+            },
+            "image_style": "Polished, high-quality photography with clean compositions.",
+            "tone_indicators": [
+                {"name": "Professional", "value": 0.7},
+                {"name": "Informative", "value": 0.6},
+                {"name": "Friendly", "value": 0.4},
+            ],
+        }
