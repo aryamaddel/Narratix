@@ -1,5 +1,6 @@
+# --- START OF FILE social.py ---
+
 import requests
-import logging
 import re
 import time
 import json
@@ -9,7 +10,6 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-logger = logging.getLogger(__name__)
 
 # Constants
 DEFAULT_TIMEOUT = 12
@@ -258,24 +258,15 @@ def fetch_page(url, session=None):
         session = get_requests_session()
 
     try:
-        logger.info(f"Fetching page: {url}")
-
         # Add jitter to avoid rate limiting
         time.sleep(0.5 + (time.time() % 1))
 
         response = session.get(url, headers=HEADERS, timeout=DEFAULT_TIMEOUT)
         if response.status_code != 200:
-            logger.warning(
-                f"Failed to fetch {url} - Status code: {response.status_code}"
-            )
             return None
 
-        logger.info(
-            f"Successfully fetched {url} - Length: {len(response.content)} bytes"
-        )
         return response.content
     except Exception as e:
-        logger.error(f"Error fetching {url}: {str(e)}")
         return None
 
 
@@ -428,12 +419,8 @@ class InstaData:
             if response.status_code == 200:
                 return response.text
             else:
-                logger.warning(
-                    f"Failed to fetch Instagram profile for {username}: Status code {response.status_code}"
-                )
                 return None
         except Exception as e:
-            logger.error(f"Error fetching Instagram data for {username}: {str(e)}")
             return None
 
     def fetch_user_details(self, username):
@@ -474,14 +461,8 @@ class InstaData:
                     except:
                         pass
 
-                logger.warning(
-                    f"Could not find shared data in Instagram page for {username}"
-                )
                 return {}
         except Exception as e:
-            logger.error(
-                f"Error parsing Instagram user details for {username}: {str(e)}"
-            )
             return {}
 
     def fetch_account_details(self, username):
@@ -531,9 +512,6 @@ class InstaData:
 
                 return []
         except Exception as e:
-            logger.error(
-                f"Error extracting Instagram account details for {username}: {str(e)}"
-            )
             return []
 
     def get_timeline(self, username):
@@ -584,9 +562,6 @@ class InstaData:
 
             return {"data": timeline_data, "count": count}
         except Exception as e:
-            logger.error(
-                f"Error extracting Instagram timeline for {username}: {str(e)}"
-            )
             return {"data": [], "count": 0}
 
     def get_user_details(self, username):
@@ -606,9 +581,6 @@ class InstaData:
             }
             return user_data
         except Exception as e:
-            logger.error(
-                f"Error formatting Instagram user details for {username}: {str(e)}"
-            )
             return {}
 
     def get_account_details(self, username):
@@ -625,9 +597,6 @@ class InstaData:
             }
             return account_data
         except Exception as e:
-            logger.error(
-                f"Error formatting Instagram account details for {username}: {str(e)}"
-            )
             return {}
 
 
@@ -636,11 +605,9 @@ def extract_detailed_instagram(url):
     # Extract username from URL
     username_match = re.search(r"instagram\.com/([^/?]+)", url)
     if not username_match:
-        logger.warning(f"Could not extract username from Instagram URL: {url}")
         return None
 
     username = username_match.group(1)
-    logger.info(f"Attempting detailed Instagram extraction for: {username}")
 
     insta = InstaData()
 
@@ -651,7 +618,6 @@ def extract_detailed_instagram(url):
         timeline = insta.get_timeline(username)
 
         if not user_details and not account_details:
-            logger.warning(f"Could not extract detailed Instagram data for {username}")
             return None
 
         # Format data for our application
@@ -693,7 +659,7 @@ def extract_detailed_instagram(url):
                     else:
                         engagement = "Low"
             except Exception as e:
-                logger.error(f"Error calculating Instagram engagement: {str(e)}")
+                pass
 
         # Estimate posting frequency
         frequency = "Monthly"  # Default
@@ -716,7 +682,7 @@ def extract_detailed_instagram(url):
                     else:
                         frequency = "Monthly"
             except Exception as e:
-                logger.error(f"Error estimating Instagram frequency: {str(e)}")
+                pass
 
         # Format content
         content_parts = []
@@ -754,7 +720,6 @@ def extract_detailed_instagram(url):
         return instagram_data
 
     except Exception as e:
-        logger.error(f"Error in detailed Instagram extraction for {username}: {str(e)}")
         return None
 
 
@@ -766,11 +731,9 @@ def extract_from_instagram(url, soup):
     # First try the specialized extraction
     detailed_data = extract_detailed_instagram(url)
     if detailed_data:
-        logger.info(f"Successfully extracted detailed Instagram data from {url}")
         return detailed_data
 
     # Fall back to the original method if detailed extraction fails
-    logger.info(f"Falling back to generic Instagram extraction for {url}")
     platform_config = PLATFORMS["instagram"]
 
     # Extract bio
@@ -1091,7 +1054,6 @@ def extract_social_content(social_links):
 
     # Exit early if no social links
     if not social_links:
-        logger.info("No social links provided")
         return social_content
 
     # Create a session for multiple requests
@@ -1106,7 +1068,6 @@ def extract_social_content(social_links):
             url = link.get("url", "")
 
             if not platform_name or not url:
-                logger.warning(f"Skipping invalid social link: {link}")
                 continue
 
             # Parse domain to avoid duplicate requests
@@ -1115,16 +1076,13 @@ def extract_social_content(social_links):
 
             # Skip if we've already scraped this domain
             if domain in scraped_domains:
-                logger.info(f"Skipping duplicate domain: {domain}")
                 continue
 
             scraped_domains.add(domain)
-            logger.info(f"Processing {platform_name} at {url}")
 
             # Fetch page content
             html_content = fetch_page(url, session)
             if not html_content:
-                logger.warning(f"Failed to fetch content from {url}")
                 # Add a minimal entry to indicate we tried
                 social_content.append(
                     {
@@ -1144,7 +1102,6 @@ def extract_social_content(social_links):
                 for tag in soup(["script", "style", "noscript"]):
                     tag.decompose()
             except Exception as e:
-                logger.error(f"Error parsing HTML from {url}: {str(e)}")
                 continue
 
             # Extract content based on platform
@@ -1214,18 +1171,16 @@ def extract_social_content(social_links):
                 # Add to results
                 social_content.append(platform_data)
 
-                logger.info(
-                    f"Successfully extracted content from {platform_name} at {url}"
-                )
             else:
-                logger.warning(f"No content extracted from {platform_name} at {url}")
+                pass  # Silently ignore if no content extracted
 
         except Exception as e:
-            logger.error(
-                f"Error processing social link {platform_name} at {url}: {str(e)}"
-            )
+            pass  # Silently ignore errors
 
     # Sort social content by platform name for consistency
     social_content.sort(key=lambda x: x.get("platform", ""))
 
     return social_content
+
+
+# --- END OF FILE social.py ---

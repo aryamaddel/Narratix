@@ -1,3 +1,5 @@
+# --- START OF FILE analyzer.py ---
+
 #!/usr/bin/env python
 """
 Content Analyzer Module for BrandDecoder
@@ -8,10 +10,7 @@ keywords, tone, sentiment, and brand values.
 
 import re
 import string
-import logging
 from collections import Counter
-
-logger = logging.getLogger(__name__)
 
 # Default lists - used when NLP libraries fail
 DEFAULT_STOPWORDS = {
@@ -658,14 +657,11 @@ try:
         nltk.data.find("corpora/stopwords")
     except LookupError:
         try:
-            logger.info("Downloading required NLTK resources...")
             nltk.download("punkt", quiet=True)
             nltk.download("stopwords", quiet=True)
         except Exception as e:
-            logger.warning(f"Could not download NLTK resources: {str(e)}")
             nltk_resources_available = False
 except ImportError:
-    logger.warning("NLTK not available, using fallback methods")
     nltk_resources_available = False
 
 # Try to import TextBlob (but continue without it if not available)
@@ -676,7 +672,6 @@ try:
     test_blob = TextBlob("Test sentence.")
     textblob_available = True
 except:
-    logger.warning("TextBlob not available, using fallback methods")
     textblob_available = False
 
 
@@ -808,7 +803,8 @@ def extract_key_values(content, keywords):
                     except:
                         pass
         except Exception as e:
-            logger.warning(f"Error extracting values from sentences: {str(e)}")
+            # Silently ignore errors if NLTK fails
+            pass
     else:
         # Simpler approach if NLTK not available
         sentences = simple_sentence_tokenize(content)
@@ -901,7 +897,6 @@ def analyze_tone(sentiment):
 
         return tones
     except Exception as e:
-        logger.warning(f"Error analyzing tone: {str(e)}")
         return DEFAULT_TONES
 
 
@@ -932,7 +927,6 @@ def analyze_content(website_content, social_content):
 
         # If content is too short, use defaults
         if len(all_text) < 50:
-            logger.warning("Content too short for analysis. Using default values.")
             return defaults
 
         # Analyze sentiment
@@ -945,7 +939,6 @@ def analyze_content(website_content, social_content):
                     "subjectivity": blob.sentiment.subjectivity,
                 }
             except Exception as e:
-                logger.warning(f"TextBlob sentiment analysis failed: {str(e)}")
                 sentiment = simple_sentiment_analysis(all_text)
         else:
             sentiment = simple_sentiment_analysis(all_text)
@@ -967,7 +960,6 @@ def analyze_content(website_content, social_content):
                     and len(word) > 2
                 ]
             except Exception as e:
-                logger.warning(f"NLTK tokenization failed: {str(e)}")
                 tokens = simple_tokenize(all_text)
         else:
             tokens = simple_tokenize(all_text)
@@ -997,5 +989,7 @@ def analyze_content(website_content, social_content):
         }
 
     except Exception as e:
-        logger.error(f"Content analysis failed: {str(e)}")
         return defaults
+
+
+# --- END OF FILE analyzer.py ---
