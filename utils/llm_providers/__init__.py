@@ -1,7 +1,6 @@
 import json
-from typing import Dict, List, Any, Optional
-from .gemini import generate_with_gemini
-from .groq import generate_with_groq
+from utils.llm_providers.gemini import generate_with_gemini
+from utils.llm_providers.groq import generate_with_groq
 
 
 def create_brand_story_prompt(brand_name, description, analysis, social_content):
