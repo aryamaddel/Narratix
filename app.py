@@ -2,11 +2,12 @@ from urllib.parse import urlparse
 from flask import Flask, render_template, request, jsonify
 
 # Import utility modules
-from utils.analyzer import analyze_content
+# Remove this import
+# from utils.analyzer import analyze_content
 # Import Gemini search utilities (now includes all social functionality)
-from utils.gemini_search import search_website_content, search_social_media, GEMINI_AVAILABLE
-from utils.gemini_search import generate_brand_story, generate_visual_profile, generate_consistency_score
-from utils.gemini_search import get_social_profiles  # Now imported from gemini_search instead of social
+from utils.brand_analyzer import search_website_content, search_social_media, GEMINI_AVAILABLE
+from utils.brand_analyzer import generate_brand_story, generate_visual_profile, generate_consistency_score
+from utils.brand_analyzer import get_social_profiles, analyze_content  # Added analyze_content here
 
 # Initialize Flask app
 app = Flask(__name__)
