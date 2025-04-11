@@ -1,4 +1,0 @@
-# Extractors package initialization file
-from utils.extractors.facebook_extractor import extract_from_facebook
-from utils.extractors.twitter_extractor import extract_from_twitter
-from utils.extractors.generic_extractor import extract_generic_content, estimate_posting_frequency

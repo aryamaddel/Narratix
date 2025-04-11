@@ -1,17 +1,15 @@
 from urllib.parse import urlparse
 from flask import Flask, render_template, request, jsonify
 
-# Import utility modules from the modularized structure
-from utils.brand_analyzer import (
-    search_website_content, 
-    search_social_media,
-    get_social_profiles,
-    GEMINI_AVAILABLE
+# Import utility modules
+from utils.crawler import extract_social_links, extract_website_content
+from utils.social import extract_social_content
+from utils.analyzer import analyze_content
+from utils.generator import (
+    generate_brand_story,
+    generate_visual_profile,
+    generate_consistency_score,
 )
-from utils.generation.story_generator import generate_brand_story
-from utils.generation.visual_generator import generate_visual_profile
-from utils.generation.score_generator import generate_consistency_score
-from utils.analysis.content_analyzer import analyze_content
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -78,68 +76,65 @@ def analyze_website():
             ],
         },
         "consistency_score": 70,
-        "api_method": "default",
-        "error": None  # Add an error field to track any specific issues
     }
 
     try:
-        # Step 1: Use Gemini API to search and extract website content if available
-        if GEMINI_AVAILABLE:
-            try:
-                website_content = search_website_content(url)
-                # Update result with website content
-                if website_content.get("brand_name"):
-                    result["brand_name"] = website_content.get("brand_name")
-                if website_content.get("description"):
-                    result["brand_description"] = website_content.get("description")
-                # Mark that we're using the Gemini API
-                result["api_method"] = "gemini"
-            except Exception as e:
-                # Continue with default website content
-                from utils.crawler import extract_website_content
-                website_content = extract_website_content(url)
-                result["error"] = f"Gemini search failed: {str(e)}"
-        else:
-            # If Gemini is not available, use traditional crawler
-            from utils.crawler import extract_website_content
-            website_content = extract_website_content(url)
-
-        # Step 2: Use our unified approach to search social media profiles
+        # Step 1: Extract social media links with error handling
         try:
-            # Use the unified function that tries search first, then scraping
-            social_content = get_social_profiles(brand_name=result["brand_name"], website_url=url)
-            
-            # Extract social links for compatibility with existing code
-            social_links = []
-            social_analytics = []
-            
-            for social in social_content:
-                # Add to social links
-                social_links.append({
-                    "platform": social["platform"],
-                    "url": social["url"]
-                })
-                
-                # Add to social analytics
-                social_analytics.append({
-                    "platform": social["platform"],
-                    "followers": social.get("followers", "N/A"),
-                    "engagement": social.get("engagement", "Medium"),
-                    "frequency": social.get("frequency", "Unknown"),
-                })
-            
+            social_links = extract_social_links(url)
             result["social_links"] = social_links
+        except Exception as e:
+            # Continue with empty social_links from default result
+            pass
+
+        # Step 2: Extract website content with error handling
+        try:
+            website_content = extract_website_content(url)
+            # Update result with website content
+            result["brand_name"] = website_content.get("brand_name", default_brand_name)
+            result["brand_description"] = website_content.get(
+                "description", result["brand_description"]
+            )
+        except Exception as e:
+            # Continue with default website content
+            website_content = {
+                "brand_name": result["brand_name"],
+                "description": result["brand_description"],
+                "content": "",
+            }
+
+        # Step 3: Fetch social media content with error handling
+        social_content = []
+        try:
+            social_content = extract_social_content(result["social_links"])
+            # Extract social analytics
+            social_analytics = []
+            for social in social_content:
+                try:
+                    social_analytics.append(
+                        {
+                            "platform": social["platform"],
+                            "followers": social.get("followers", "N/A"),
+                            "engagement": social.get("engagement", "N/A"),
+                            "frequency": social.get("frequency", "N/A"),
+                        }
+                    )
+                except Exception:
+                    continue
+
             result["social_analytics"] = social_analytics
         except Exception as e:
             # Continue with empty social_content
-            social_content = []
+            pass
 
-        # Step 3: Analyze the content with error handling
+        # Step 4: Analyze the content with error handling
         try:
             analysis = analyze_content(website_content, social_content)
             # Update result with analysis
             result["key_values"] = analysis.get("key_values", result["key_values"])
-            result["tone_analysis"] = analysis.get("tone_analysis", result["tone_analysis"])
+            result["tone_analysis"] = analysis.get(
+                "tone_analysis", result["tone_analysis"]
+            )
             result["keywords"] = analysis.get("keywords", result["keywords"])
         except Exception as e:
             # Continue with default analysis from result
@@ -150,7 +145,7 @@ def analyze_website():
                 "sentiment": {"polarity": 0.1, "subjectivity": 0.3},
             }
 
-        # Step 4: Generate the brand story with error handling
+        # Step 5: Generate the brand story with error handling
         try:
             brand_story = generate_brand_story(
                 result["brand_name"],
@@ -158,27 +153,12 @@ def analyze_website():
                 analysis,
                 social_content,
             )
-            
-            # Ensure brand_story is a string and properly formatted
-            if brand_story:
-                # Make sure brand story is a string
-                if not isinstance(brand_story, str):
-                    brand_story = str(brand_story)
-                
-                # Ensure it has proper Markdown formatting with headers
-                if not brand_story.startswith("#"):
-                    brand_story = f"# {result['brand_name']}: Brand Story\n\n{brand_story}"
-                    
-                # Remove any problematic characters that might affect display
-                brand_story = brand_story.replace("\r", "")
-                
-                result["brand_story"] = brand_story
+            result["brand_story"] = brand_story
         except Exception as e:
-            # Create a simple brand story as fallback
-            result["brand_story"] = f"# {result['brand_name']}: Brand Story\n\n## Overview\n\n{result['brand_description']}"
-            result["error"] = f"Brand story generation failed: {str(e)}"
+            # Create a simple brand story as fallback (already in result defaults)
+            pass
 
-        # Step 5: Generate visual profile data with error handling
+        # Step 6: Generate visual profile data with error handling
         try:
             visual_profile = generate_visual_profile(analysis)
             result["visual_profile"] = visual_profile
@@ -186,7 +166,7 @@ def analyze_website():
             # Continue with default visual profile
             pass
 
-        # Step 6: Calculate consistency score with error handling
+        # Step 7: Calculate consistency score with error handling
         try:
             consistency_score = generate_consistency_score(
                 website_content, social_content, analysis
