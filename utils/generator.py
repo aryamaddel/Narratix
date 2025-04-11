@@ -83,8 +83,26 @@ def generate_with_gemini(
         """
 
         # Generate content with Gemini
-        model = genai.GenerativeModel("gemini-pro")
-        response = model.generate_content(prompt)
+        try:
+            # Use the specified model name
+            logger.debug("Attempting to use Gemini model with specified name")
+            model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25")
+            response = model.generate_content(prompt)
+        except Exception as model_error:
+            logger.warning(f"Primary model attempt failed: {str(model_error)}, trying alternative formats")
+            try:
+                # Try with another possible format
+                model = genai.GenerativeModel("models/gemini-2.5-pro-exp-03-25")
+                response = model.generate_content(prompt)
+            except Exception as fallback_error:
+                # Try with original format as last resort
+                try:
+                    logger.warning(f"Second model attempt failed: {str(fallback_error)}, trying another alternative")
+                    model = genai.GenerativeModel("gemini-pro")
+                    response = model.generate_content(prompt)
+                except Exception as final_error:
+                    logger.error(f"All Gemini model attempts failed. Final error: {str(final_error)}")
+                    raise final_error
 
         # Return the generated story
         if response and hasattr(response, "text"):
