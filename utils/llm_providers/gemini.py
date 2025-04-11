@@ -8,10 +8,15 @@ if not GEMINI_API_KEY:
 
 genai.configure(api_key=GEMINI_API_KEY)
 
+
 def generate_with_gemini(prompt):
     """Generate content using Google's Gemini AI model"""
-    model_options = ["gemini-2.5-pro-exp-03-25", "models/gemini-2.5-pro-exp-03-25", "gemini-pro"]
-    
+    model_options = [
+        "gemini-2.5-pro-exp-03-25",
+        "models/gemini-2.5-pro-exp-03-25",
+        "gemini-pro",
+    ]
+
     for model_name in model_options:
         try:
             response = genai.GenerativeModel(model_name).generate_content(prompt)
@@ -19,5 +24,5 @@ def generate_with_gemini(prompt):
                 return response.text
         except Exception:
             continue
-    
+
     return None

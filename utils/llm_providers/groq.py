@@ -8,13 +8,17 @@ if not GROQ_API_KEY:
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 
+
 def generate_with_groq(prompt):
     """Generate content using Groq API"""
     try:
         completion = groq_client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "You are a professional brand storyteller"},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are a professional brand storyteller",
+                },
+                {"role": "user", "content": prompt},
             ],
             model="llama-3.3-70b-versatile",
             temperature=0.5,
