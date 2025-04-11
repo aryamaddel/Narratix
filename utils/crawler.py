@@ -12,7 +12,6 @@ from urllib3.util.retry import Retry
 logger = logging.getLogger(__name__)
 
 
-# Configure requests session with retries
 def get_requests_session():
     """Create a requests session with retry capability"""
     session = requests.Session()

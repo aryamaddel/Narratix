@@ -420,13 +420,17 @@ class InstaData:
     def get_data(self, username):
         """Fetch raw HTML data for a given Instagram username"""
         try:
-            url = f'https://www.instagram.com/{username}/'
-            response = self.session.get(url, headers=self.headers, timeout=DEFAULT_TIMEOUT)
-            
+            url = f"https://www.instagram.com/{username}/"
+            response = self.session.get(
+                url, headers=self.headers, timeout=DEFAULT_TIMEOUT
+            )
+
             if response.status_code == 200:
                 return response.text
             else:
-                logger.warning(f"Failed to fetch Instagram profile for {username}: Status code {response.status_code}")
+                logger.warning(
+                    f"Failed to fetch Instagram profile for {username}: Status code {response.status_code}"
+                )
                 return None
         except Exception as e:
             logger.error(f"Error fetching Instagram data for {username}: {str(e)}")
@@ -437,21 +441,26 @@ class InstaData:
         insta_link = self.get_data(username)
         if not insta_link:
             return {}
-        
+
         try:
             # Extract shared data JSON
-            pattern = r'window\._sharedData = (.*?);</script>'
+            pattern = r"window\._sharedData = (.*?);</script>"
             match = re.search(pattern, insta_link)
-            
+
             if match:
                 json_data = json.loads(match.group(1))
-                user_data = json_data.get('entry_data', {}).get('ProfilePage', [{}])[0].get('graphql', {}).get('user', {})
+                user_data = (
+                    json_data.get("entry_data", {})
+                    .get("ProfilePage", [{}])[0]
+                    .get("graphql", {})
+                    .get("user", {})
+                )
                 return user_data
             else:
                 # Try alternative pattern for newer Instagram layout
                 alt_pattern = r'<script type="application/ld\+json">(.*?)</script>'
                 alt_match = re.search(alt_pattern, insta_link, re.DOTALL)
-                
+
                 if alt_match:
                     try:
                         ld_json = json.loads(alt_match.group(1))
@@ -464,11 +473,15 @@ class InstaData:
                         }
                     except:
                         pass
-                
-                logger.warning(f"Could not find shared data in Instagram page for {username}")
+
+                logger.warning(
+                    f"Could not find shared data in Instagram page for {username}"
+                )
                 return {}
         except Exception as e:
-            logger.error(f"Error parsing Instagram user details for {username}: {str(e)}")
+            logger.error(
+                f"Error parsing Instagram user details for {username}: {str(e)}"
+            )
             return {}
 
     def fetch_account_details(self, username):
@@ -476,12 +489,12 @@ class InstaData:
         insta_link = self.get_data(username)
         if not insta_link:
             return []
-        
+
         try:
             # Look for meta content with followers info
             pattern = r'<meta content="([0-9,.KkMm]+) Followers, ([0-9,.KkMm]+) Following, ([0-9,.KkMm]+) Posts'
             match = re.search(pattern, insta_link)
-            
+
             if match:
                 followers = match.group(1)
                 following = match.group(2)
@@ -491,93 +504,111 @@ class InstaData:
                 # Alternative extraction method from user details
                 user_details = self.fetch_user_details(username)
                 if user_details:
-                    followers = user_details.get('edge_followed_by', {}).get('count', 0)
-                    following = user_details.get('edge_follow', {}).get('count', 0)
-                    posts = user_details.get('edge_owner_to_timeline_media', {}).get('count', 0)
+                    followers = user_details.get("edge_followed_by", {}).get("count", 0)
+                    following = user_details.get("edge_follow", {}).get("count", 0)
+                    posts = user_details.get("edge_owner_to_timeline_media", {}).get(
+                        "count", 0
+                    )
                     return [str(followers), str(following), str(posts)]
                 else:
                     # Last resort: try extracting numbers from page text
-                    soup = BeautifulSoup(insta_link, 'html.parser')
+                    soup = BeautifulSoup(insta_link, "html.parser")
                     page_text = soup.get_text()
-                    
-                    followers_pattern = r'([\d,.KkMm]+)\s*followers'
-                    following_pattern = r'([\d,.KkMm]+)\s*following'
-                    posts_pattern = r'([\d,.KkMm]+)\s*posts'
-                    
+
+                    followers_pattern = r"([\d,.KkMm]+)\s*followers"
+                    following_pattern = r"([\d,.KkMm]+)\s*following"
+                    posts_pattern = r"([\d,.KkMm]+)\s*posts"
+
                     followers = re.search(followers_pattern, page_text, re.IGNORECASE)
                     following = re.search(following_pattern, page_text, re.IGNORECASE)
                     posts = re.search(posts_pattern, page_text, re.IGNORECASE)
-                    
+
                     return [
                         followers.group(1) if followers else "0",
                         following.group(1) if following else "0",
-                        posts.group(1) if posts else "0"
+                        posts.group(1) if posts else "0",
                     ]
-                
+
                 return []
         except Exception as e:
-            logger.error(f"Error extracting Instagram account details for {username}: {str(e)}")
+            logger.error(
+                f"Error extracting Instagram account details for {username}: {str(e)}"
+            )
             return []
 
     def get_timeline(self, username):
         """Get recent posts from the user's timeline"""
         user_data = self.fetch_user_details(username)
         if not user_data:
-            return {'data': [], 'count': 0}
-        
+            return {"data": [], "count": 0}
+
         try:
-            timeline_edges = user_data.get('edge_owner_to_timeline_media', {}).get('edges', [])
+            timeline_edges = user_data.get("edge_owner_to_timeline_media", {}).get(
+                "edges", []
+            )
             count = len(timeline_edges)
-            
+
             timeline_data = []
             for i, edge in enumerate(timeline_edges):
                 if i >= 5:  # Limit to 5 most recent posts
                     break
-                    
-                node = edge.get('node', {})
-                post_caption_edges = node.get('edge_media_to_caption', {}).get('edges', [])
-                post_txt = post_caption_edges[0]['node']['text'] if post_caption_edges else ""
-                
-                post_img = node.get('display_url', '')
-                post_likes = node.get('edge_liked_by', {}).get('count', 0)
-                post_comments = node.get('edge_media_to_comment', {}).get('count', 0)
-                post_time = node.get('taken_at_timestamp', 0)
-                
+
+                node = edge.get("node", {})
+                post_caption_edges = node.get("edge_media_to_caption", {}).get(
+                    "edges", []
+                )
+                post_txt = (
+                    post_caption_edges[0]["node"]["text"] if post_caption_edges else ""
+                )
+
+                post_img = node.get("display_url", "")
+                post_likes = node.get("edge_liked_by", {}).get("count", 0)
+                post_comments = node.get("edge_media_to_comment", {}).get("count", 0)
+                post_time = node.get("taken_at_timestamp", 0)
+
                 # Convert timestamp to formatted date
-                date = datetime.fromtimestamp(post_time) if post_time else datetime.now()
-                formatted_date = date.strftime('%Y-%m-%d %H:%M:%S')
-                
-                timeline_data.append({
-                    'post_img': post_img,
-                    'post_txt': post_txt,
-                    'post_time': formatted_date,
-                    'post_likes': post_likes,
-                    'post_comments': post_comments
-                })
-            
-            return {'data': timeline_data, 'count': count}
+                date = (
+                    datetime.fromtimestamp(post_time) if post_time else datetime.now()
+                )
+                formatted_date = date.strftime("%Y-%m-%d %H:%M:%S")
+
+                timeline_data.append(
+                    {
+                        "post_img": post_img,
+                        "post_txt": post_txt,
+                        "post_time": formatted_date,
+                        "post_likes": post_likes,
+                        "post_comments": post_comments,
+                    }
+                )
+
+            return {"data": timeline_data, "count": count}
         except Exception as e:
-            logger.error(f"Error extracting Instagram timeline for {username}: {str(e)}")
-            return {'data': [], 'count': 0}
+            logger.error(
+                f"Error extracting Instagram timeline for {username}: {str(e)}"
+            )
+            return {"data": [], "count": 0}
 
     def get_user_details(self, username):
         """Get formatted user profile information"""
         json_output = self.fetch_user_details(username)
         if not json_output:
             return {}
-        
+
         try:
             user_data = {
-                'img': json_output.get('profile_pic_url_hd', ''),
-                'full_name': json_output.get('full_name', ''),
-                'username': json_output.get('username', username),
-                'is_verified': "true" if json_output.get('is_verified') else "false",
-                'id': json_output.get('id', ''),
-                'instaUrl': f"https://instagram.com/{username}"
+                "img": json_output.get("profile_pic_url_hd", ""),
+                "full_name": json_output.get("full_name", ""),
+                "username": json_output.get("username", username),
+                "is_verified": "true" if json_output.get("is_verified") else "false",
+                "id": json_output.get("id", ""),
+                "instaUrl": f"https://instagram.com/{username}",
             }
             return user_data
         except Exception as e:
-            logger.error(f"Error formatting Instagram user details for {username}: {str(e)}")
+            logger.error(
+                f"Error formatting Instagram user details for {username}: {str(e)}"
+            )
             return {}
 
     def get_account_details(self, username):
@@ -585,70 +616,74 @@ class InstaData:
         user_details = self.fetch_account_details(username)
         if not user_details or len(user_details) < 3:
             return {}
-        
+
         try:
             account_data = {
-                'followers': user_details[0],
-                'following': user_details[1],
-                'posts': user_details[2]
+                "followers": user_details[0],
+                "following": user_details[1],
+                "posts": user_details[2],
             }
             return account_data
         except Exception as e:
-            logger.error(f"Error formatting Instagram account details for {username}: {str(e)}")
+            logger.error(
+                f"Error formatting Instagram account details for {username}: {str(e)}"
+            )
             return {}
 
 
 def extract_detailed_instagram(url):
     """Enhanced Instagram extraction using InstaData class"""
     # Extract username from URL
-    username_match = re.search(r'instagram\.com/([^/?]+)', url)
+    username_match = re.search(r"instagram\.com/([^/?]+)", url)
     if not username_match:
         logger.warning(f"Could not extract username from Instagram URL: {url}")
         return None
-        
+
     username = username_match.group(1)
     logger.info(f"Attempting detailed Instagram extraction for: {username}")
-    
+
     insta = InstaData()
-    
+
     try:
         # Get various Instagram data
         user_details = insta.get_user_details(username)
         account_details = insta.get_account_details(username)
         timeline = insta.get_timeline(username)
-        
+
         if not user_details and not account_details:
             logger.warning(f"Could not extract detailed Instagram data for {username}")
             return None
-            
+
         # Format data for our application
         followers = account_details.get("followers", "0")
         following = account_details.get("following", "0")
         posts_count = account_details.get("posts", "0")
-        
+
         # Calculate engagement if possible
         engagement = "Medium"  # Default
         timeline_data = timeline.get("data", [])
         if timeline_data and followers and followers not in ["0", ""]:
             try:
                 # Clean the followers value for calculation
-                followers_cleaned = followers.replace(',', '')
-                followers_cleaned = re.sub(r'[KkMm]', '', followers_cleaned)
-                if 'k' in followers.lower():
+                followers_cleaned = followers.replace(",", "")
+                followers_cleaned = re.sub(r"[KkMm]", "", followers_cleaned)
+                if "k" in followers.lower():
                     followers_num = float(followers_cleaned) * 1000
-                elif 'm' in followers.lower():
+                elif "m" in followers.lower():
                     followers_num = float(followers_cleaned) * 1000000
                 else:
                     followers_num = float(followers_cleaned)
-                
+
                 # Calculate average engagement from last posts
                 likes_sum = sum(post.get("post_likes", 0) for post in timeline_data)
-                comments_sum = sum(post.get("post_comments", 0) for post in timeline_data)
-                
+                comments_sum = sum(
+                    post.get("post_comments", 0) for post in timeline_data
+                )
+
                 if timeline_data and followers_num > 0:
                     avg_engagement = (likes_sum + comments_sum) / len(timeline_data)
                     engagement_rate = avg_engagement / followers_num
-                    
+
                     if engagement_rate > 0.1:  # 10%+
                         engagement = "Very High"
                     elif engagement_rate > 0.03:  # 3-10%
@@ -659,7 +694,7 @@ def extract_detailed_instagram(url):
                         engagement = "Low"
             except Exception as e:
                 logger.error(f"Error calculating Instagram engagement: {str(e)}")
-                
+
         # Estimate posting frequency
         frequency = "Monthly"  # Default
         if timeline_data:
@@ -667,9 +702,11 @@ def extract_detailed_instagram(url):
                 if len(timeline_data) >= 3:
                     # Check last post date
                     latest_post = timeline_data[0]
-                    post_date = datetime.strptime(latest_post.get('post_time'), '%Y-%m-%d %H:%M:%S')
+                    post_date = datetime.strptime(
+                        latest_post.get("post_time"), "%Y-%m-%d %H:%M:%S"
+                    )
                     days_since = (datetime.now() - post_date).days
-                    
+
                     if days_since < 2:
                         frequency = "Daily"
                     elif days_since < 7:
@@ -680,17 +717,19 @@ def extract_detailed_instagram(url):
                         frequency = "Monthly"
             except Exception as e:
                 logger.error(f"Error estimating Instagram frequency: {str(e)}")
-        
+
         # Format content
         content_parts = []
         if user_details.get("full_name"):
             content_parts.append(f"Name: {user_details['full_name']}")
-            
+
         # Add recent post captions
         for i, post in enumerate(timeline_data[:3]):  # Include up to 3 recent posts
             if post.get("post_txt"):
-                content_parts.append(f"Post {i+1}: {clean_text_content(post['post_txt'], 150)}")
-        
+                content_parts.append(
+                    f"Post {i+1}: {clean_text_content(post['post_txt'], 150)}"
+                )
+
         # Create detailed Instagram data
         instagram_data = {
             "platform": "Instagram",
@@ -702,14 +741,18 @@ def extract_detailed_instagram(url):
             "frequency": frequency,
             "is_verified": user_details.get("is_verified", "false"),
             "profile_image": user_details.get("img", ""),
-            "content": " | ".join(content_parts) if content_parts else "Limited content available",
+            "content": (
+                " | ".join(content_parts)
+                if content_parts
+                else "Limited content available"
+            ),
             "real_data": True,
             "url": url,
-            "recent_posts": timeline_data
+            "recent_posts": timeline_data,
         }
-        
+
         return instagram_data
-        
+
     except Exception as e:
         logger.error(f"Error in detailed Instagram extraction for {username}: {str(e)}")
         return None
@@ -725,7 +768,7 @@ def extract_from_instagram(url, soup):
     if detailed_data:
         logger.info(f"Successfully extracted detailed Instagram data from {url}")
         return detailed_data
-    
+
     # Fall back to the original method if detailed extraction fails
     logger.info(f"Falling back to generic Instagram extraction for {url}")
     platform_config = PLATFORMS["instagram"]
@@ -1142,12 +1185,16 @@ def extract_social_content(social_links):
 
                     posts = platform_data.get("posts", [])
                     for i, post in enumerate(posts):
-                        content_parts.append(f"Post {i+1}: {clean_text_content(post, 250)}")
-                    
+                        content_parts.append(
+                            f"Post {i+1}: {clean_text_content(post, 250)}"
+                        )
+
                     # Combine into a single content field
                     if "content" not in platform_data:  # Only set if not already set
                         platform_data["content"] = (
-                            " | ".join(content_parts) if content_parts else "Limited content available"
+                            " | ".join(content_parts)
+                            if content_parts
+                            else "Limited content available"
                         )
 
                 # Add URL and real_data flag if not already set
@@ -1155,8 +1202,9 @@ def extract_social_content(social_links):
                     platform_data["url"] = url
                 if "real_data" not in platform_data:
                     platform_data["real_data"] = bool(
-                        platform_data.get("bio") or platform_data.get("posts") or 
-                        platform_data.get("content")
+                        platform_data.get("bio")
+                        or platform_data.get("posts")
+                        or platform_data.get("content")
                     )
 
                 # Remove internal fields
