@@ -8,6 +8,23 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+# Try to import optional dependencies
+try:
+    from seleniumwire import webdriver
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    SELENIUM_AVAILABLE = True
+except ImportError:
+    SELENIUM_AVAILABLE = False
+
+try:
+    import playwright.sync_api as playwright
+    PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    PLAYWRIGHT_AVAILABLE = False
 
 # Constants
 DEFAULT_TIMEOUT = 12
@@ -391,56 +408,6 @@ def normalize_follower_count(count_text):
         return count_text
 
 
-def estimate_posting_frequency(posts, page_text):
-    """Estimate posting frequency from content"""
-    # Look for date patterns in posts to estimate frequency
-    date_patterns = [
-        r"\d{1,2}[/-]\d{1,2}[/-]\d{2,4}",  # 01/01/2023
-        r"\d{1,2}\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s\d{2,4}",  # 1 Jan 2023
-        r"(yesterday|today|hours? ago|minutes? ago|seconds? ago)",  # Relative time
-        r"\d+ (day|hour|minute|second)s? ago",  # X days ago
-    ]
-
-    recent_count = 0
-    for post in posts:
-        for pattern in date_patterns:
-            if re.search(pattern, post, re.IGNORECASE):
-                if any(
-                    term in post.lower()
-                    for term in [
-                        "today",
-                        "hour ago",
-                        "minute ago",
-                        "second ago",
-                        "just now",
-                    ]
-                ):
-                    recent_count += 1
-                break
-
-    # Check for frequency indicators in page text
-    daily_indicators = ["daily post", "daily update", "every day", "posts daily"]
-    weekly_indicators = ["weekly post", "weekly update", "every week", "posts weekly"]
-
-    for indicator in daily_indicators:
-        if indicator in page_text.lower():
-            return "Daily"
-
-    for indicator in weekly_indicators:
-        if indicator in page_text.lower():
-            return "Weekly"
-
-    # Estimate based on number of recent posts
-    if recent_count >= 2:
-        return "Daily"
-    elif len(posts) >= 4:
-        return "Weekly"
-    elif len(posts) >= 2:
-        return "Bi-weekly"
-    else:
-        return "Monthly"
-
-
 def clean_text_content(text, max_length=500):
     """Clean and truncate text content"""
     if not text:
@@ -456,685 +423,310 @@ def clean_text_content(text, max_length=500):
     return text
 
 
-# ---- Instagram Specialized Extraction ----
-
-
-class InstaData:
-    """Class to handle detailed Instagram data extraction (inspired by PHP code)"""
-
-    def __init__(self):
-        self.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Connection": "keep-alive",
-            "Origin": "https://www.instagram.com",
-            "Referer": "https://www.instagram.com/",
-        }
-        self.session = get_requests_session()
-
-    def get_data(self, username):
-        """Fetch raw HTML data for a given Instagram username"""
-        try:
-            url = f"https://www.instagram.com/{username}/"
-            response = self.session.get(
-                url, headers=self.headers, timeout=DEFAULT_TIMEOUT
-            )
-
-            if response.status_code == 200:
-                return response.text
-            else:
-                return None
-        except Exception as e:
-            return None
-
-    def fetch_user_details(self, username):
-        """Extract user data from Instagram profile page"""
-        insta_link = self.get_data(username)
-        if not insta_link:
-            return {}
-
-        try:
-            # Extract shared data JSON
-            pattern = r"window\._sharedData = (.*?);</script>"
-            match = re.search(pattern, insta_link)
-
-            if match:
-                json_data = json.loads(match.group(1))
-                user_data = (
-                    json_data.get("entry_data", {})
-                    .get("ProfilePage", [{}])[0]
-                    .get("graphql", {})
-                    .get("user", {})
-                )
-                return user_data
-            else:
-                # Try alternative pattern for newer Instagram layout
-                alt_pattern = r'<script type="application/ld\+json">(.*?)</script>'
-                alt_match = re.search(alt_pattern, insta_link, re.DOTALL)
-
-                if alt_match:
-                    try:
-                        ld_json = json.loads(alt_match.group(1))
-                        # Extract what we can from the LD+JSON
-                        return {
-                            "username": ld_json.get("name", username),
-                            "full_name": ld_json.get("name", ""),
-                            "profile_pic_url_hd": ld_json.get("image", ""),
-                            "is_verified": "false",
-                        }
-                    except:
-                        pass
-
-                return {}
-        except Exception as e:
-            return {}
-
-    def fetch_account_details(self, username):
-        """Extract follower counts and metrics"""
-        insta_link = self.get_data(username)
-        if not insta_link:
-            return []
-
-        try:
-            # Look for meta content with followers info
-            pattern = r'<meta content="([0-9,.KkMm]+) Followers, ([0-9,.KkMm]+) Following, ([0-9,.KkMm]+) Posts'
-            match = re.search(pattern, insta_link)
-
-            if match:
-                followers = match.group(1)
-                following = match.group(2)
-                posts = match.group(3)
-                return [followers, following, posts]
-            else:
-                # Alternative extraction method from user details
-                user_details = self.fetch_user_details(username)
-                if user_details:
-                    followers = user_details.get("edge_followed_by", {}).get("count", 0)
-                    following = user_details.get("edge_follow", {}).get("count", 0)
-                    posts = user_details.get("edge_owner_to_timeline_media", {}).get(
-                        "count", 0
-                    )
-                    return [str(followers), str(following), str(posts)]
-                else:
-                    # Last resort: try extracting numbers from page text
-                    soup = BeautifulSoup(insta_link, "html.parser")
-                    page_text = soup.get_text()
-
-                    followers_pattern = r"([\d,.KkMm]+)\s*followers"
-                    following_pattern = r"([\d,.KkMm]+)\s*following"
-                    posts_pattern = r"([\d,.KkMm]+)\s*posts"
-
-                    followers = re.search(followers_pattern, page_text, re.IGNORECASE)
-                    following = re.search(following_pattern, page_text, re.IGNORECASE)
-                    posts = re.search(posts_pattern, page_text, re.IGNORECASE)
-
-                    return [
-                        followers.group(1) if followers else "0",
-                        following.group(1) if following else "0",
-                        posts.group(1) if posts else "0",
-                    ]
-
-                return []
-        except Exception as e:
-            return []
-
-    def get_timeline(self, username):
-        """Get recent posts from the user's timeline"""
-        user_data = self.fetch_user_details(username)
-        if not user_data:
-            return {"data": [], "count": 0}
-
-        try:
-            timeline_edges = user_data.get("edge_owner_to_timeline_media", {}).get(
-                "edges", []
-            )
-            count = len(timeline_edges)
-
-            timeline_data = []
-            for i, edge in enumerate(timeline_edges):
-                if i >= 5:  # Limit to 5 most recent posts
-                    break
-
-                node = edge.get("node", {})
-                post_caption_edges = node.get("edge_media_to_caption", {}).get(
-                    "edges", []
-                )
-                post_txt = (
-                    post_caption_edges[0]["node"]["text"] if post_caption_edges else ""
-                )
-
-                post_img = node.get("display_url", "")
-                post_likes = node.get("edge_liked_by", {}).get("count", 0)
-                post_comments = node.get("edge_media_to_comment", {}).get("count", 0)
-                post_time = node.get("taken_at_timestamp", 0)
-
-                # Convert timestamp to formatted date
-                date = (
-                    datetime.fromtimestamp(post_time) if post_time else datetime.now()
-                )
-                formatted_date = date.strftime("%Y-%m-%d %H:%M:%S")
-
-                timeline_data.append(
-                    {
-                        "post_img": post_img,
-                        "post_txt": post_txt,
-                        "post_time": formatted_date,
-                        "post_likes": post_likes,
-                        "post_comments": post_comments,
-                    }
-                )
-
-            return {"data": timeline_data, "count": count}
-        except Exception as e:
-            return {"data": [], "count": 0}
-
-    def get_user_details(self, username):
-        """Get formatted user profile information"""
-        json_output = self.fetch_user_details(username)
-        if not json_output:
-            return {}
-
-        try:
-            user_data = {
-                "img": json_output.get("profile_pic_url_hd", ""),
-                "full_name": json_output.get("full_name", ""),
-                "username": json_output.get("username", username),
-                "is_verified": "true" if json_output.get("is_verified") else "false",
-                "id": json_output.get("id", ""),
-                "instaUrl": f"https://instagram.com/{username}",
-            }
-            return user_data
-        except Exception as e:
-            return {}
-
-    def get_account_details(self, username):
-        """Get formatted account metrics"""
-        user_details = self.fetch_account_details(username)
-        if not user_details or len(user_details) < 3:
-            return {}
-
-        try:
-            account_data = {
-                "followers": user_details[0],
-                "following": user_details[1],
-                "posts": user_details[2],
-            }
-            return account_data
-        except Exception as e:
-            return {}
-
-
-def extract_detailed_instagram(url):
-    """Enhanced Instagram extraction using InstaData class"""
-    # Extract username from URL
-    username_match = re.search(r"instagram\.com/([^/?]+)", url)
-    if not username_match:
-        return None
-
-    username = username_match.group(1)
-
-    insta = InstaData()
-
+# New API-based extraction methods
+def extract_from_twitter_api(username):
+    """
+    Extract Twitter data using the new guest token method
+    (doesn't require developer account)
+    """
     try:
-        # Get various Instagram data
-        user_details = insta.get_user_details(username)
-        account_details = insta.get_account_details(username)
-        timeline = insta.get_timeline(username)
-
-        if not user_details and not account_details:
-            return None
-
-        # Format data for our application
-        followers = account_details.get("followers", "0")
-        following = account_details.get("following", "0")
-        posts_count = account_details.get("posts", "0")
-
-        # Calculate engagement if possible
-        engagement = "Medium"  # Default
-        timeline_data = timeline.get("data", [])
-        if timeline_data and followers and followers not in ["0", ""]:
-            try:
-                # Clean the followers value for calculation
-                followers_cleaned = followers.replace(",", "")
-                followers_cleaned = re.sub(r"[KkMm]", "", followers_cleaned)
-                if "k" in followers.lower():
-                    followers_num = float(followers_cleaned) * 1000
-                elif "m" in followers.lower():
-                    followers_num = float(followers_cleaned) * 1000000
-                else:
-                    followers_num = float(followers_cleaned)
-
-                # Calculate average engagement from last posts
-                likes_sum = sum(post.get("post_likes", 0) for post in timeline_data)
-                comments_sum = sum(
-                    post.get("post_comments", 0) for post in timeline_data
-                )
-
-                if timeline_data and followers_num > 0:
-                    avg_engagement = (likes_sum + comments_sum) / len(timeline_data)
-                    engagement_rate = avg_engagement / followers_num
-
-                    if engagement_rate > 0.1:  # 10%+
-                        engagement = "Very High"
-                    elif engagement_rate > 0.03:  # 3-10%
-                        engagement = "High"
-                    elif engagement_rate > 0.01:  # 1-3%
-                        engagement = "Medium"
-                    else:
-                        engagement = "Low"
-            except Exception as e:
-                pass
-
-        # Estimate posting frequency
-        frequency = "Monthly"  # Default
-        if timeline_data:
-            try:
-                if len(timeline_data) >= 3:
-                    # Check last post date
-                    latest_post = timeline_data[0]
-                    post_date = datetime.strptime(
-                        latest_post.get("post_time"), "%Y-%m-%d %H:%M:%S"
-                    )
-                    days_since = (datetime.now() - post_date).days
-
-                    if days_since < 2:
-                        frequency = "Daily"
-                    elif days_since < 7:
-                        frequency = "Weekly"
-                    elif days_since < 14:
-                        frequency = "Bi-weekly"
-                    else:
-                        frequency = "Monthly"
-            except Exception as e:
-                pass
-
-        # Format content
-        content_parts = []
-        if user_details.get("full_name"):
-            content_parts.append(f"Name: {user_details['full_name']}")
-
-        # Add recent post captions
-        for i, post in enumerate(timeline_data[:3]):  # Include up to 3 recent posts
-            if post.get("post_txt"):
-                content_parts.append(
-                    f"Post {i+1}: {clean_text_content(post['post_txt'], 150)}"
-                )
-
-        # Create detailed Instagram data
-        instagram_data = {
-            "platform": "Instagram",
-            "type": "profile",
-            "followers": followers,
-            "following": following,
-            "posts_count": posts_count,
-            "engagement": engagement,
-            "frequency": frequency,
-            "is_verified": user_details.get("is_verified", "false"),
-            "profile_image": user_details.get("img", ""),
-            "content": (
-                " | ".join(content_parts)
-                if content_parts
-                else "Limited content available"
-            ),
-            "real_data": True,
-            "url": url,
-            "recent_posts": timeline_data,
+        # Get a guest token
+        session = requests.Session()
+        response = session.post(
+            "https://api.twitter.com/1.1/guest/activate.json",
+            headers={"Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"}
+        )
+        guest_token = json.loads(response.text)["guest_token"]
+        
+        # Use the token to get user data
+        headers = {
+            "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+            "x-guest-token": guest_token
         }
-
-        return instagram_data
-
-    except Exception as e:
-        return None
-
-
-def extract_from_instagram(url, soup):
-    """
-    Extract content from an Instagram profile
-    Now with enhanced data extraction option
-    """
-    # First try the specialized extraction
-    detailed_data = extract_detailed_instagram(url)
-    if detailed_data:
-        return detailed_data
-
-    # Fall back to the original method if detailed extraction fails
-    platform_config = PLATFORMS["instagram"]
-
-    # Extract bio
-    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
-    bio = " ".join(bio_texts) if bio_texts else ""
-
-    # Extract posts
-    posts = extract_post_texts(soup, platform_config["post_selectors"])
-
-    # Extract follower count
-    page_text = soup.get_text()
-    follower_count = extract_count_from_text(
-        page_text, platform_config["follower_patterns"]
-    )
-
-    # Instagram typically has high engagement
-    engagement_level = "High"
-
-    # Estimate posting frequency from posts or page text
-    posting_frequency = estimate_posting_frequency(posts, page_text)
-
-    return {
-        "platform": "Instagram",
-        "type": platform_config["type"],
-        "bio": bio,
-        "posts": posts,
-        "followers": follower_count,
-        "engagement": engagement_level,
-        "frequency": posting_frequency,
-    }
-
-
-# ---- Platform-Specific Extraction Functions ----
-
-
-def extract_from_facebook(url, soup):
-    """Extract content from a Facebook page"""
-    platform_config = PLATFORMS["facebook"]
-
-    # Extract bio/about content
-    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
-    bio = " ".join(bio_texts) if bio_texts else ""
-
-    # Extract posts
-    posts = extract_post_texts(soup, platform_config["post_selectors"])
-
-    # Extract follower count - enhanced approach for Facebook
-    page_text = soup.get_text()
-    follower_count = extract_count_from_text(
-        page_text, platform_config["follower_patterns"]
-    )
-
-    # If still no follower count, try more specific selectors
-    if not follower_count:
-
-        # Try common Facebook follower/like display elements
-        follower_elements = (
-            soup.select("[data-key='followers_count']")
-            or soup.select(".clearfix ._4bl9")
-            or soup.select("._4-u2._6590._3xaf._4-u8")
+        
+        # Get user data
+        user_response = session.get(
+            f"https://api.twitter.com/graphql/NimuplG1OB7Fd2btCLdBOw/UserByScreenName?variables=%7B%22screen_name%22%3A%22{username}%22%2C%22withSafetyModeUserFields%22%3Atrue%7D",
+            headers=headers
         )
-
-        for element in follower_elements:
-            element_text = element.get_text()
-            if any(
-                keyword in element_text.lower()
-                for keyword in ["follower", "like", "follow"]
-            ):
-                number_match = re.search(r"([\d,.]+[kKmM]?)", element_text)
-                if number_match:
-                    follower_count = number_match.group(1)
-                    break
-
-    # Estimate engagement level based on likes and comments
-    engagement_indicators = ["like", "comment", "share"]
-    engagement_count = sum(
-        1 for indicator in engagement_indicators if indicator in page_text.lower()
-    )
-    engagement_level = (
-        "High"
-        if engagement_count >= 2
-        else "Medium" if engagement_count >= 1 else "Low"
-    )
-
-    # Estimate posting frequency
-    posting_frequency = estimate_posting_frequency(posts, page_text)
-
-    return {
-        "platform": "Facebook",
-        "type": platform_config["type"],
-        "bio": bio,
-        "posts": posts,
-        "followers": follower_count,
-        "engagement": engagement_level,
-        "frequency": posting_frequency,
-    }
-
-
-def extract_from_twitter(url, soup):
-    """Extract content from a Twitter profile"""
-    platform_config = PLATFORMS["twitter"]
-
-    # Extract bio
-    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
-    bio = " ".join(bio_texts) if bio_texts else ""
-
-    # Extract tweets
-    posts = extract_post_texts(soup, platform_config["post_selectors"])
-
-    # Extract follower count - enhanced for Twitter
-    page_text = soup.get_text()
-    follower_count = extract_count_from_text(
-        page_text, platform_config["follower_patterns"]
-    )
-
-    # If still no follower count, try more specific Twitter selectors
-    if not follower_count:
-
-        # Try common Twitter follower count elements
-        follower_elements = (
-            soup.select('[data-testid="UserProfileHeader_Items"]')
-            or soup.select('[data-nav="followers"]')
-            or soup.select(".ProfileNav-item--followers")
-        )
-
-        for element in follower_elements:
-            element_text = element.get_text()
-            if "follower" in element_text.lower():
-                number_match = re.search(r"([\d,.]+[kKmM]?)", element_text)
-                if number_match:
-                    follower_count = number_match.group(1)
-                    break
-
-    # Estimate engagement from retweets, likes, and replies
-    engagement_indicators = ["retweet", "like", "reply", "favorite"]
-    engagement_count = sum(
-        1
-        for post in posts
-        for indicator in engagement_indicators
-        if indicator.lower() in post.lower()
-    )
-    engagement_level = (
-        "High"
-        if engagement_count >= 5
-        else "Medium" if engagement_count >= 2 else "Low"
-    )
-
-    # Estimate posting frequency
-    posting_frequency = estimate_posting_frequency(posts, page_text)
-    if not posting_frequency:
-        # Twitter is typically high frequency
-        posting_frequency = "Daily" if len(posts) >= 3 else "Weekly"
-
-    return {
-        "platform": "Twitter",
-        "type": platform_config["type"],
-        "bio": bio,
-        "posts": posts,
-        "followers": follower_count,
-        "engagement": engagement_level,
-        "frequency": posting_frequency,
-    }
-
-
-def extract_from_linkedin(url, soup):
-    """Extract content from a LinkedIn profile or company page"""
-    platform_config = PLATFORMS["linkedin"]
-
-    # Extract bio/about content
-    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
-    bio = " ".join(bio_texts) if bio_texts else ""
-
-    # Extract posts
-    posts = extract_post_texts(soup, platform_config["post_selectors"])
-
-    # Extract follower count
-    page_text = soup.get_text()
-    follower_count = extract_count_from_text(
-        page_text, platform_config["follower_patterns"]
-    )
-
-    # Estimate engagement level
-    engagement_level = "Medium"  # Default for LinkedIn
-    if "comments" in page_text.lower() and "likes" in page_text.lower():
-        engagement_level = "High"
-
-    # Estimate posting frequency
-    posting_frequency = estimate_posting_frequency(posts, page_text)
-
-    return {
-        "platform": "LinkedIn",
-        "type": platform_config["type"],
-        "bio": bio,
-        "posts": posts,
-        "followers": follower_count,
-        "engagement": engagement_level,
-        "frequency": posting_frequency,
-    }
-
-
-def extract_from_youtube(url, soup):
-    """Extract content from a YouTube channel"""
-    platform_config = PLATFORMS["youtube"]
-
-    # Extract bio/about content
-    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
-    bio = " ".join(bio_texts) if bio_texts else ""
-
-    # Extract video titles as posts
-    posts = extract_post_texts(soup, platform_config["post_selectors"])
-
-    # Extract follower count
-    page_text = soup.get_text()
-    follower_count = extract_count_from_text(
-        page_text, platform_config.get("follower_patterns", [])
-    )
-    
-    # If no follower count found using patterns, try specific YouTube selectors
-    if not follower_count:
-        # Try multiple selector formats to find subscriber count
-        for subscriber_selector in [
-            ".yt-core-attributed-string.yt-content-metadata-view-model-wiz__metadata-text",
-            ".yt-content-metadata-view-model-wiz__metadata-text",
-            "span[role='text']",  # More generic selector
-            "[class*='subscriber']", # Target any class containing 'subscriber'
-            "[class*='yt-core-attributed-string']", # More generic YouTube text
-        ]:
-            subscriber_elements = soup.select(subscriber_selector)
-            
-            for element in subscriber_elements:
-                element_text = element.get_text().strip()
-                if "subscriber" in element_text.lower():
-                    number_match = re.search(r"([\d,.]+[kKmM]?)", element_text)
-                    if number_match:
-                        follower_count = number_match.group(1)
-                        break
-            
-            if follower_count:
-                break
+        
+        if user_response.status_code == 200:
+            user_data = json.loads(user_response.text)
+            user = user_data.get("data", {}).get("user", {})
+            if not user:
+                return None
                 
-        # If still not found, try searching directly in page text for subscriber patterns
-        if not follower_count:
-            subscriber_pattern = r"([\d,.]+[kKmM]?)\s*subscribers?"
-            subscriber_match = re.search(subscriber_pattern, page_text, re.IGNORECASE)
-            if subscriber_match:
-                follower_count = subscriber_match.group(1)
-
-    # YouTube typically has medium to high engagement
-    engagement_level = "Medium"
-    if "likes" in page_text.lower() and "comments" in page_text.lower():
-        engagement_level = "High"
-
-    # Estimate posting frequency
-    posting_frequency = estimate_posting_frequency(posts, page_text)
-
-    # Ensure normalized subscriber count
-    if follower_count:
-        follower_count = normalize_follower_count(follower_count)
-
-    return {
-        "platform": "YouTube",
-        "type": platform_config["type"],
-        "bio": bio,
-        "posts": posts,
-        "subscribers": follower_count, 
-        "engagement": engagement_level,
-        "frequency": posting_frequency,
-    }
-
-
-def extract_generic_content(url, soup, platform_name):
-    """Generic extraction for platforms without specific implementations"""
-    if not platform_name or platform_name not in PLATFORMS:
-        # Try to identify the platform
-        platform_name = identify_platform(url)
-        if not platform_name:
-            return None
-
-    platform_config = PLATFORMS.get(platform_name, {})
-    if not platform_config:
+            result = user.get("result", {})
+            legacy = result.get("legacy", {})
+            
+            return {
+                "platform": "Twitter",
+                "type": "profile",
+                "followers": str(legacy.get("followers_count", 0)),
+                "following": str(legacy.get("friends_count", 0)),
+                "bio": result.get("legacy", {}).get("description", ""),
+                "content": result.get("legacy", {}).get("description", ""),
+                "engagement": "Medium",
+                "frequency": "Daily" if legacy.get("statuses_count", 0) > 1000 else "Weekly",
+                "real_data": True,
+                "url": f"https://twitter.com/{username}"
+            }
+    except Exception as e:
+        print(f"Twitter API error: {str(e)}")
         return None
 
-    # Extract bio/about content
-    bio_texts = extract_text_from_selectors(
-        soup, platform_config.get("bio_selectors", [])
-    )
-    bio = " ".join(bio_texts) if bio_texts else ""
+def extract_instagram_with_graphql(username):
+    """Extract Instagram data using the GraphQL API"""
+    try:
+        # Try to extract data using Instagram's public GraphQL endpoint
+        session = requests.Session()
+        url = f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}"
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.5",
+            "X-IG-App-ID": "936619743392459",  # Public Instagram Web App ID
+            "X-Requested-With": "XMLHttpRequest",
+            "Connection": "keep-alive",
+            "Referer": f"https://www.instagram.com/{username}/",
+            "Origin": "https://www.instagram.com"
+        }
+        
+        response = session.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            data = json.loads(response.text)
+            user_data = data.get("data", {}).get("user", {})
+            
+            if user_data:
+                return {
+                    "platform": "Instagram",
+                    "type": "profile",
+                    "followers": str(user_data.get("edge_followed_by", {}).get("count", 0)),
+                    "following": str(user_data.get("edge_follow", {}).get("count", 0)),
+                    "content": user_data.get("biography", ""),
+                    "profile_image": user_data.get("profile_pic_url_hd", ""),
+                    "posts_count": str(user_data.get("edge_owner_to_timeline_media", {}).get("count", 0)),
+                    "engagement": "Medium",
+                    "frequency": "Weekly",
+                    "real_data": True,
+                    "url": f"https://instagram.com/{username}"
+                }
+                
+        return None
+    except Exception as e:
+        print(f"Instagram GraphQL error: {str(e)}")
+        return None
 
+# Browser automation methods for JavaScript-heavy sites
+def extract_generic_content(url, soup, platform_name):
+    """Extract content from a generic social media platform"""
+    if not platform_name or platform_name not in PLATFORMS:
+        return None
+        
+    platform_config = PLATFORMS[platform_name]
+    
+    # Extract bio text
+    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
+    bio = bio_texts[0] if bio_texts else ""
+    
     # Extract posts
-    posts = extract_post_texts(soup, platform_config.get("post_selectors", []))
-
+    posts = extract_post_texts(soup, platform_config["post_selectors"])
+    
     # Extract follower count
+    follower_count = None
     page_text = soup.get_text()
-    follower_count = extract_count_from_text(
-        page_text, platform_config.get("follower_patterns", [])
-    )
-
-    # Default engagement and frequency
-    engagement_level = "Medium"
-    posting_frequency = estimate_posting_frequency(posts, page_text)
-
-    # Create the result dictionary with special handling for YouTube
+    follower_count = extract_count_from_text(page_text, platform_config["follower_patterns"])
+    
+    # Build result
     result = {
         "platform": platform_name.capitalize(),
-        "type": platform_config.get("type", "profile"),
+        "type": platform_config["type"],
         "bio": bio,
         "posts": posts,
-        "engagement": engagement_level,
-        "frequency": posting_frequency,
+        "followers": follower_count if follower_count else "N/A",
+        "content": bio,
+        "engagement": "Medium",
+        "frequency": "Weekly",
+        "real_data": bool(bio or posts),
+        "url": url
     }
-
-    # Use "subscribers" field name for YouTube, "followers" for everything else
-    if platform_name.lower() == "youtube":
-        result["subscribers"] = follower_count
-    else:
-        result["followers"] = follower_count
-
+    
     return result
 
+def extract_with_selenium(url, platform_name):
+    """
+    Extract data using Selenium WebDriver for JavaScript-heavy sites
+    """
+    if not SELENIUM_AVAILABLE:
+        return None
+        
+    try:
+        # Setup WebDriver
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-notifications")
+        options.add_argument(f"user-agent={HEADERS['User-Agent']}")
+        
+        driver = webdriver.Chrome(options=options)
+        driver.set_page_load_timeout(30)
+        
+        try:
+            driver.get(url)
+            # Wait for page to load
+            time.sleep(5)
+            
+            # Get the page source after JavaScript execution
+            html_content = driver.page_source
+            soup = BeautifulSoup(html_content, "html.parser")
+            
+            # Extract content based on platform
+            if platform_name == "twitter":
+                # Extract Twitter followers using Selenium-specific selectors
+                try:
+                    followers_el = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="UserName"] + div span'))
+                    )
+                    followers_text = followers_el.text
+                    follower_count = extract_count_from_text(followers_text, PLATFORMS["twitter"]["follower_patterns"])
+                except:
+                    follower_count = None
+                    
+                # Extract Bio
+                try:
+                    bio_el = driver.find_element(By.CSS_SELECTOR, '[data-testid="UserDescription"]')
+                    bio = bio_el.text
+                except:
+                    bio = ""
+                    
+                return {
+                    "platform": "Twitter",
+                    "type": "profile",
+                    "bio": bio,
+                    "followers": follower_count,
+                    "content": bio,
+                    "engagement": "Medium",
+                    "frequency": "Daily",
+                    "real_data": True,
+                    "url": url
+                }
+            
+            elif platform_name == "instagram":
+                # Wait for follower count to load
+                try:
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "header section ul li"))
+                    )
+                    # Get follower count
+                    follower_elements = driver.find_elements(By.CSS_SELECTOR, "header section ul li")
+                    follower_count = None
+                    
+                    for el in follower_elements:
+                        text = el.text.lower()
+                        if "follower" in text:
+                            follower_count = extract_count_from_text(text, PLATFORMS["instagram"]["follower_patterns"])
+                            break
+                            
+                    # Get bio
+                    try:
+                        bio_el = driver.find_element(By.CSS_SELECTOR, "header section h2 + span")
+                        bio = bio_el.text
+                    except:
+                        bio = ""
+                        
+                    return {
+                        "platform": "Instagram",
+                        "type": "profile",
+                        "bio": bio,
+                        "followers": follower_count,
+                        "content": bio,
+                        "engagement": "High",
+                        "frequency": "Weekly",
+                        "real_data": True,
+                        "url": url
+                    }
+                except:
+                    pass
+            
+            return extract_generic_content(url, soup, platform_name)
+        finally:
+            driver.quit()
+    except Exception as e:
+        print(f"Selenium error: {str(e)}")
+        return None
 
-# ---- Main Extraction Function ----
-
+def extract_with_playwright(url, platform_name):
+    """
+    Extract content using Playwright for modern JavaScript-heavy sites
+    """
+    if not PLAYWRIGHT_AVAILABLE:
+        return None
+        
+    try:
+        with playwright.sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                user_agent=HEADERS["User-Agent"],
+                viewport={"width": 1920, "height": 1080}
+            )
+            
+            page = context.new_page()
+            page.goto(url, wait_until="networkidle", timeout=30000)
+            
+            # Wait for content to load
+            page.wait_for_timeout(2000)
+            
+            # Get page content
+            content = page.content()
+            soup = BeautifulSoup(content, "html.parser")
+            
+            # Platform-specific extraction
+            if platform_name == "twitter":
+                # Try to get followers count
+                followers = None
+                try:
+                    followers_el = page.query_selector('[data-testid="UserName"] + div span')
+                    if followers_el:
+                        followers_text = followers_el.inner_text()
+                        followers = extract_count_from_text(followers_text, PLATFORMS["twitter"]["follower_patterns"])
+                except:
+                    pass
+                    
+                # Try to get bio
+                bio = ""
+                try:
+                    bio_el = page.query_selector('[data-testid="UserDescription"]')
+                    if bio_el:
+                        bio = bio_el.inner_text()
+                except:
+                    pass
+                    
+                return {
+                    "platform": "Twitter",
+                    "type": "profile",
+                    "bio": bio,
+                    "followers": followers,
+                    "content": bio,
+                    "engagement": "Medium",
+                    "frequency": "Daily",
+                    "real_data": True,
+                    "url": url
+                }
+            
+            # Generic extraction for other platforms
+            browser.close()
+            return extract_generic_content(url, soup, platform_name)
+    except Exception as e:
+        print(f"Playwright error: {str(e)}")
+        return None
 
 def extract_social_content(social_links):
     """
-    Extract content from social media platforms
-
-    This function focuses on retrieving real data from social media sites
-    through web scraping. It works directly with public content without requiring
-    API authentication.
-
-    Args:
-        social_links: List of dictionaries containing platform and URL information
-
-    Returns:
-        List of dictionaries containing extracted social media content
+    Extract content from social media platforms using multiple methods
     """
     social_content = []
 
@@ -1147,6 +739,41 @@ def extract_social_content(social_links):
 
     # Track domains we've already scraped to avoid duplicates
     scraped_domains = set()
+    # Define the extract_generic_content function
+    def extract_generic_content(url, soup, platform_name):
+        """Extract content from a generic social media platform"""
+        if not platform_name or platform_name not in PLATFORMS:
+            return None
+            
+        platform_config = PLATFORMS[platform_name]
+        
+        # Extract bio text
+        bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
+        bio = bio_texts[0] if bio_texts else ""
+        
+        # Extract posts
+        posts = extract_post_texts(soup, platform_config["post_selectors"])
+        
+        # Extract follower count
+        follower_count = None
+        page_text = soup.get_text()
+        follower_count = extract_count_from_text(page_text, platform_config["follower_patterns"])
+        
+        # Build result
+        result = {
+            "platform": platform_name.capitalize(),
+            "type": platform_config["type"],
+            "bio": bio,
+            "posts": posts,
+            "followers": follower_count if follower_count else "N/A",
+            "content": bio,
+            "engagement": "Medium",
+            "frequency": "Weekly",
+            "real_data": bool(bio or posts),
+            "url": url
+        }
+        
+        return result
 
     for link in social_links:
         try:
@@ -1165,56 +792,80 @@ def extract_social_content(social_links):
                 continue
 
             scraped_domains.add(domain)
-
-            # Fetch page content
-            html_content = fetch_page(url, session)
-            if not html_content:
-                # Add a minimal entry to indicate we tried
-                social_content.append(
-                    {
-                        "platform": platform_name.capitalize(),
-                        "type": PLATFORMS.get(platform_name, {}).get("type", "profile"),
-                        "content": f"Could not access content from {platform_name}",
-                        "url": url,
-                        "real_data": False,
-                    }
-                )
-                continue
-
-            # Parse HTML
-            try:
-                soup = BeautifulSoup(html_content, "html.parser")
-                # Remove script and style elements
-                for tag in soup(["script", "style", "noscript"]):
-                    tag.decompose()
-            except Exception as e:
-                continue
-
-            # Extract content based on platform
-            platform_data = None
-
-            if platform_name == "facebook":
-                platform_data = extract_from_facebook(url, soup)
-            elif platform_name in ["twitter", "x"]:
-                platform_data = extract_from_twitter(url, soup)
+            
+            # Extract username for API methods
+            username = None
+            if platform_name == "twitter" or platform_name == "x":
+                username_match = re.search(r"(?:twitter|x)\.com/([^/?]+)", url)
+                if username_match:
+                    username = username_match.group(1)
+                    
+                    # Try API-based extraction first
+                    platform_data = extract_from_twitter_api(username)
+                    if platform_data and platform_data.get("followers") not in ["0", "", "N/A", None]:
+                        social_content.append(platform_data)
+                        continue
+            
             elif platform_name == "instagram":
-                platform_data = extract_from_instagram(url, soup)
-            elif platform_name == "linkedin":
-                platform_data = extract_from_linkedin(url, soup)
-            elif platform_name == "youtube":
-                platform_data = extract_from_youtube(url, soup)
-            else:
-                # Try to identify platform from URL if not specified
-                if not platform_name:
-                    detected_platform = identify_platform(url)
-                    if detected_platform:
-                        platform_name = detected_platform
+                username_match = re.search(r"instagram\.com/([^/?]+)", url)
+                if username_match:
+                    username = username_match.group(1)
+                    
+                    # Try GraphQL API extraction
+                    platform_data = extract_instagram_with_graphql(username)
+                    if platform_data and platform_data.get("followers") not in ["0", "", "N/A", None]:
+                        social_content.append(platform_data)
+                        continue
 
-                # Use generic extraction
-                platform_data = extract_generic_content(url, soup, platform_name)
+            # Fetch page content with standard method
+            html_content = fetch_page(url, session)
+            platform_data = None
+            
+            if html_content:
+                # Parse HTML
+                try:
+                    soup = BeautifulSoup(html_content, "html.parser")
+                    # Remove script and style elements
+                    for tag in soup(["script", "style", "noscript"]):
+                        tag.decompose()
+                except Exception as e:
+                    continue
+
+                # Extract content based on platform
+                if platform_name == "facebook":
+                    platform_data = extract_from_facebook(url, soup)
+                elif platform_name in ["twitter", "x"]:
+                    platform_data = extract_from_twitter(url, soup)
+                elif platform_name == "instagram":
+                    platform_data = extract_from_instagram(url, soup)
+                elif platform_name == "linkedin":
+                    platform_data = extract_from_linkedin(url, soup)
+                elif platform_name == "youtube":
+                    platform_data = extract_from_youtube(url, soup)
+                else:
+                    # Try to identify platform from URL if not specified
+                    if not platform_name:
+                        detected_platform = identify_platform(url)
+                        if detected_platform:
+                            platform_name = detected_platform
+
+                    # Use generic extraction
+                    platform_data = extract_generic_content(url, soup, platform_name)
+            
+            # If standard extraction failed or didn't find followers, try Selenium
+            if not platform_data or platform_data.get("followers") in ["N/A", "0", "", None]:
+                selenium_data = extract_with_selenium(url, platform_name)
+                if selenium_data and selenium_data.get("followers") not in ["N/A", "0", "", None]:
+                    platform_data = selenium_data
+            
+            # If still no good data, try Playwright
+            if not platform_data or platform_data.get("followers") in ["N/A", "0", "", None]:
+                playwright_data = extract_with_playwright(url, platform_name)
+                if playwright_data and playwright_data.get("followers") not in ["N/A", "0", "", None]:
+                    platform_data = playwright_data
 
             if platform_data:
-                # Convert posts and bio to a single content field
+                # Process content and format data
                 content_parts = []
 
                 # Handle special case for Instagram with recent_posts already extracted
@@ -1245,6 +896,66 @@ def extract_social_content(social_links):
                     platform_data["followers"] = normalize_follower_count(
                         platform_data["followers"]
                     )
+                elif "subscribers" in platform_data:
+                    # Standardize: rename subscribers to followers for consistency
+                    platform_data["followers"] = normalize_follower_count(
+                        platform_data["subscribers"]
+                    )
+                    platform_data.pop("subscribers", None)
+                else:
+                    # Set default value for missing follower count
+                    platform_data["followers"] = "N/A"
+                
+                # Additional fallback follower count extraction for specific platforms
+                if platform_data.get("followers") in ["N/A", "0", "", None]:
+                    # Try more aggressive follower extraction for specific platforms
+                    if platform_name in ["twitter", "x"]:
+                        # Extra aggressive Twitter follower extraction
+                        twitter_follower_patterns = [
+                            r"(?:has|with)\s+([\d,.]+[kKmM]?)\s+followers",
+                            r"([\d,.]+[kKmM]?)\s+people\s+follow",
+                            r"Followers\s*:\s*([\d,.]+[kKmM]?)",
+                            r"([\d,.]+[kKmM]?)\s+Followers"
+                        ]
+                        page_text = soup.get_text()
+                        for pattern in twitter_follower_patterns:
+                            match = re.search(pattern, page_text, re.IGNORECASE)
+                            if match:
+                                platform_data["followers"] = normalize_follower_count(match.group(1))
+                                break
+                    
+                    elif platform_name == "youtube":
+                        # Extra aggressive YouTube subscriber extraction
+                        youtube_sub_patterns = [
+                            r"([\d,.]+[kKmM]?)\s*subscribers",
+                            r"([\d,.]+[kKmM]?)\s*Subscribers",
+                            r"has\s+([\d,.]+[kKmM]?)\s+subscribers",
+                            r"([\d,.]+[kKmM]?)\s+subscribed"
+                        ]
+                        page_text = soup.get_text()
+                        for pattern in youtube_sub_patterns:
+                            match = re.search(pattern, page_text, re.IGNORECASE)
+                            if match:
+                                platform_data["followers"] = normalize_follower_count(match.group(1))
+                                break
+                                
+                    elif platform_name == "instagram" and platform_data.get("followers") in ["0", ""]:
+                        # Try additional Instagram patterns
+                        insta_follower_patterns = [
+                            r"([\d,.]+[kKmM]?)\s*followers",
+                            r"([\d,.]+[kKmM]?)\s*Followers",
+                            r"([0-9,.]+[kKmM]?)\s+follower",
+                        ]
+                        page_text = soup.get_text()
+                        for pattern in insta_follower_patterns:
+                            match = re.search(pattern, page_text, re.IGNORECASE)
+                            if match:
+                                platform_data["followers"] = normalize_follower_count(match.group(1))
+                                break
+                                
+                    # If we still have no follower count, use "N/A" for consistency
+                    if not platform_data.get("followers") or platform_data.get("followers") in ["0", ""]:
+                        platform_data["followers"] = "N/A"
 
                 # Add URL and real_data flag if not already set
                 if "url" not in platform_data:
@@ -1273,3 +984,187 @@ def extract_social_content(social_links):
     social_content.sort(key=lambda x: x.get("platform", ""))
 
     return social_content
+
+
+def extract_from_facebook(url, soup):
+    """Extract content from a Facebook page"""
+    # Get platform config
+    platform_config = PLATFORMS["facebook"]
+    
+    # Extract bio/about information
+    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
+    bio = bio_texts[0] if bio_texts else ""
+    
+    # Extract posts
+    posts = extract_post_texts(soup, platform_config["post_selectors"])
+    
+    # Extract follower count from page text
+    page_text = soup.get_text()
+    follower_count = extract_count_from_text(page_text, platform_config["follower_patterns"])
+    
+    # Extract like count (specific to Facebook)
+    like_patterns = [r"([\d,.]+[kKmM]?)\s*people\s*like\s*this", r"([\d,.]+[kKmM]?)\s*likes"]
+    like_count = extract_count_from_text(page_text, like_patterns)
+    
+    return {
+        "platform": "Facebook",
+        "type": platform_config["type"],
+        "bio": bio,
+        "posts": posts,
+        "followers": follower_count if follower_count else "N/A",
+        "likes": like_count if like_count else "N/A",
+        "content": bio,
+        "engagement": "Medium",
+        "frequency": "Weekly",
+        "real_data": bool(bio or posts),
+        "url": url
+    }
+
+def extract_from_twitter(url, soup):
+    """Extract content from a Twitter profile"""
+    # Get platform config
+    platform_config = PLATFORMS["twitter"]
+    
+    # Extract bio information
+    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
+    bio = bio_texts[0] if bio_texts else ""
+    
+    # Extract tweets
+    tweets = extract_post_texts(soup, platform_config["post_selectors"])
+    
+    # Extract follower count
+    page_text = soup.get_text()
+    follower_count = extract_count_from_text(page_text, platform_config["follower_patterns"])
+    
+    # Extract following count (specific to Twitter)
+    following_patterns = [
+        r"(\d+[\d,.]*[kKmM]?)\s*(?:Following|following)",
+        r"Following\s*(\d+[\d,.]*[kKmM]?)",
+    ]
+    following_count = extract_count_from_text(page_text, following_patterns)
+    
+    return {
+        "platform": "Twitter",
+        "type": platform_config["type"],
+        "bio": bio,
+        "posts": tweets,
+        "followers": follower_count if follower_count else "N/A",
+        "following": following_count if following_count else "N/A",
+        "content": bio,
+        "engagement": "High",
+        "frequency": "Daily",
+        "real_data": bool(bio or tweets),
+        "url": url
+    }
+
+def extract_from_instagram(url, soup):
+    """Extract content from an Instagram profile"""
+    # Get platform config
+    platform_config = PLATFORMS["instagram"]
+    
+    # Extract bio information
+    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
+    bio = bio_texts[0] if bio_texts else ""
+    
+    # Extract posts
+    posts = extract_post_texts(soup, platform_config["post_selectors"], max_posts=3)
+    
+    # Extract follower count
+    page_text = soup.get_text()
+    follower_count = extract_count_from_text(page_text, platform_config["follower_patterns"])
+    
+    # Try to extract post count (specific to Instagram)
+    post_count_patterns = [
+        r"([\d,.]+[kKmM]?)\s*posts",
+        r"([\d,.]+[kKmM]?)\s*publications",
+        r"([\d,.]+)\s*post"
+    ]
+    post_count = extract_count_from_text(page_text, post_count_patterns)
+    
+    return {
+        "platform": "Instagram",
+        "type": platform_config["type"],
+        "bio": bio,
+        "posts": posts,
+        "followers": follower_count if follower_count else "N/A",
+        "post_count": post_count if post_count else "N/A",
+        "content": bio,
+        "engagement": "High",
+        "frequency": "Weekly",
+        "real_data": bool(bio or posts),
+        "url": url
+    }
+
+def extract_from_linkedin(url, soup):
+    """Extract content from a LinkedIn company page"""
+    # Get platform config
+    platform_config = PLATFORMS["linkedin"]
+    
+    # Extract bio/about information
+    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
+    bio = bio_texts[0] if bio_texts else ""
+    
+    # Extract posts
+    posts = extract_post_texts(soup, platform_config["post_selectors"])
+    
+    # Extract follower count
+    page_text = soup.get_text()
+    follower_count = extract_count_from_text(page_text, platform_config["follower_patterns"])
+    
+    # Try to extract employee count (specific to LinkedIn)
+    employee_patterns = [
+        r"([\d,.]+[kKmM]?)\s*employees",
+        r"([\d,.]+[kKmM]?)\s*employee"
+    ]
+    employee_count = extract_count_from_text(page_text, employee_patterns)
+    
+    return {
+        "platform": "LinkedIn",
+        "type": platform_config["type"],
+        "bio": bio,
+        "posts": posts,
+        "followers": follower_count if follower_count else "N/A",
+        "employees": employee_count if employee_count else "N/A",
+        "content": bio,
+        "engagement": "Medium",
+        "frequency": "Weekly",
+        "real_data": bool(bio or posts),
+        "url": url
+    }
+
+def extract_from_youtube(url, soup):
+    """Extract content from a YouTube channel"""
+    # Get platform config
+    platform_config = PLATFORMS["youtube"]
+    
+    # Extract channel description
+    bio_texts = extract_text_from_selectors(soup, platform_config["bio_selectors"])
+    bio = bio_texts[0] if bio_texts else ""
+    
+    # Extract video titles as "posts"
+    videos = extract_post_texts(soup, platform_config["post_selectors"])
+    
+    # Extract subscriber count
+    page_text = soup.get_text()
+    subscriber_count = extract_count_from_text(page_text, platform_config["follower_patterns"])
+    
+    # Try to extract view count (specific to YouTube)
+    view_patterns = [
+        r"([\d,.]+[kKmM]?)\s*views",
+        r"([\d,.]+[kKmM]?)\s*total\s*views"
+    ]
+    view_count = extract_count_from_text(page_text, view_patterns)
+    
+    return {
+        "platform": "YouTube",
+        "type": platform_config["type"],
+        "bio": bio,
+        "posts": videos,
+        "subscribers": subscriber_count if subscriber_count else "N/A",
+        "views": view_count if view_count else "N/A",
+        "content": bio,
+        "engagement": "High",
+        "frequency": "Weekly",
+        "real_data": bool(bio or videos),
+        "url": url
+    }
