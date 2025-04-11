@@ -105,126 +105,59 @@ def generate_with_gemini(
 
 
 def generate_brand_story(brand_name, description, analysis, social_content):
-    """Generate a basic brand story based on the analysis"""
-    try:
-        # Extract key components from the analysis
-        keywords = analysis.get("keywords", [])[:5]
-        key_values = analysis.get("key_values", [])
-        tone_analysis = analysis.get("tone_analysis", {})
-        
-        # Determine the dominant tone
-        dominant_tone = max(tone_analysis.items(), key=lambda x: x[1])[0] if tone_analysis else "professional"
-        
-        # Create a brand story with standard sections
-        # Introduction
-        intro = f"# {brand_name}: Brand Story\n\n## Introduction\n\n"
-        intro += f"{brand_name} is a brand focused on {key_values[0].lower() if key_values else 'quality'} "
-        intro += f"and {key_values[1].lower() if len(key_values) > 1 else 'excellence'}. {description}"
-        
-        # Core Values
-        values = "\n\n## Core Values\n\n"
-        values += f"{brand_name} operates according to the following established values and principles:\n\n"
-        for value in key_values[:5]:
-            values += f"- **{value}**: Core principle guiding {brand_name}'s operations.\n"
-            
-        # Brand Voice
-        voice = "\n\n## Brand Voice & Tone\n\n"
-        voice += f"The {brand_name} brand communicates with a {dominant_tone} voice. "
-        voice += f"Key themes and language include {', '.join([f'**{k}**' for k in keywords[:3]])}."
-        
-        # Social Media
-        social = "\n\n## Social Media Presence\n\n"
-        if social_content:
-            social += f"{brand_name} maintains a strategic social media presence across multiple platforms:\n\n"
-            for platform in social_content[:3]:
-                platform_name = platform.get("platform", "Unknown")
-                followers = platform.get("followers", "N/A")
-                social += f"- **{platform_name}**: {followers} followers\n"
-        else:
-            social += f"{brand_name} maintains a focused digital presence aligned with its brand values."
-        
-        # Conclusion
-        conclusion = f"\n\n## Conclusion\n\n{brand_name} continues to set standards through its "
-        conclusion += f"commitment to {key_values[0] if key_values else 'quality'} and excellence."
-        
-        return intro + values + voice + social + conclusion
-        
-    except Exception:
-        # Create a simple fallback brand story
-        fallback = f"# {brand_name}: Brand Story\n\n## Introduction\n\n"
-        fallback += f"{brand_name} is a brand focused on delivering quality products and services. {description}\n\n"
-        fallback += "## Core Values\n\nQuality, Innovation, Service, Excellence, Integrity\n\n"
-        fallback += f"## Brand Voice & Tone\n\nThe brand communicates with a professional voice.\n\n"
-        fallback += f"## Social Media Presence\n\n{brand_name} maintains a strategic social media presence.\n\n"
-        fallback += f"## Conclusion\n\n{brand_name} continues to set standards through its commitment to quality."
-        return fallback
+    """Generate a simplified brand story"""
+    # Extract keywords and values
+    keywords = analysis.get("keywords", [])[:5]
+    key_values = analysis.get("key_values", [])[:3]
+    
+    # Create sections
+    intro = f"# {brand_name}: Brand Story\n\n"
+    intro += f"## Introduction\n\n{brand_name} is focused on {key_values[0].lower() if key_values else 'quality'}. {description}\n\n"
+    
+    values = "## Core Values\n\n"
+    for i, value in enumerate(key_values[:3]):
+        values += f"- **{value}**: A guiding principle for {brand_name}\n"
+    values += "\n"
+    
+    tone = analysis.get("tone_analysis", {})
+    dominant_tone = max(tone.items(), key=lambda x: x[1])[0] if tone else "professional" 
+    
+    voice = f"## Brand Voice\n\n{brand_name} communicates with a {dominant_tone} tone, "
+    voice += f"using themes like {', '.join(keywords[:3])}.\n\n"
+    
+    social = "## Social Media\n\n"
+    if social_content:
+        for platform in social_content[:3]:
+            platform_name = platform.get("platform", "")
+            followers = platform.get("followers", "N/A")
+            social += f"- **{platform_name}**: {followers} followers\n"
+    else:
+        social += "Limited social media presence detected.\n"
+    
+    return intro + values + voice + social
 
 def generate_visual_profile(analysis):
-    """Generate a simplified visual profile based on analysis"""
-    try:
-        # Default professional color palette
-        default_palette = {
+    """Generate a simple visual profile"""
+    return {
+        "color_palette": {
             "primary": "#0A3D62",  # Dark blue
-            "secondary": "#3E92CC",  # Medium blue
+            "secondary": "#3E92CC", # Medium blue
             "accent": "#D8D8D8",    # Light gray
-            "neutral": "#F5F5F5",   # Off-white
-            "highlight": "#2E86AB", # Teal blue
-        }
-        
-        # Default font style
-        default_font = {
-            "heading": "Montserrat or Georgia",
-            "body": "Open Sans or Roboto",
-            "style": "Clean, structured typography with proper hierarchy",
-        }
-        
-        # Get tone analysis or use default
-        tone_analysis = analysis.get("tone_analysis", {})
-        if not tone_analysis:
-            tone_analysis = {
-                "professional": 0.7,
-                "friendly": 0.4,
-                "informative": 0.6,
-            }
-            
-        # Extract top tones
-        tone_indicators = [
+        },
+        "font_style": {
+            "heading": "Montserrat",
+            "body": "Open Sans",
+        },
+        "tone_indicators": [
             {"name": tone.capitalize(), "value": round(value, 2)}
-            for tone, value in sorted(tone_analysis.items(), 
-                                     key=lambda x: x[1], 
-                                     reverse=True)[:3]
+            for tone, value in sorted(
+                analysis.get("tone_analysis", {}).items(),
+                key=lambda x: x[1],
+                reverse=True
+            )[:3]
         ]
-        
-        return {
-            "color_palette": default_palette,
-            "font_style": default_font,
-            "image_style": "Professional photography with clean compositions.",
-            "tone_indicators": tone_indicators,
-        }
-    except Exception:
-        # Return default profile on error
-        return {
-            "color_palette": {
-                "primary": "#0A3D62",
-                "secondary": "#3E92CC",
-                "accent": "#D8D8D8",
-                "neutral": "#F5F5F5",
-                "highlight": "#2E86AB",
-            },
-            "font_style": {
-                "heading": "Montserrat or Georgia",
-                "body": "Open Sans or Roboto",
-                "style": "Clean typography",
-            },
-            "image_style": "Professional photography",
-            "tone_indicators": [
-                {"name": "Professional", "value": 0.7},
-                {"name": "Informative", "value": 0.6},
-                {"name": "Friendly", "value": 0.4},
-            ],
-        }
+    }
 
 def generate_consistency_score(website_content, social_content, analysis):
-    """Generate a simplified consistency score"""
-    # Just return a reasonable score between 65-85
-    return random.randint(65, 85)
+    """Generate a simple consistency score between 65-85"""
+    return 75  # Fixed value for simplicity
