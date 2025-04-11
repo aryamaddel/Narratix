@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-"""
-Crawler module for BrandDecoder
-
-This module handles website crawling to extract social media links,
-brand information, and content from websites.
-"""
-
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -13,7 +5,6 @@ import logging
 import json
 import os
 from urllib.parse import urlparse, urljoin
-import time
 import random
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry

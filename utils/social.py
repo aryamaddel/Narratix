@@ -1,18 +1,8 @@
-#!/usr/bin/env python
-"""
-Social Media Integration Module for BrandDecoder
-
-This module handles extracting real content from social media platforms.
-It implements specialized scrapers for major platforms and fallback methods
-for generic sites.
-"""
-
 import requests
 import logging
 import re
 import time
-import json
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
