@@ -4,7 +4,8 @@ from flask import Flask, render_template, request, jsonify
 from utils.crawler import extract_website_content, extract_social_links
 from utils.socials import extract_social_content  # Updated import path
 from utils.analyzer import analyze_content
-from utils.generator import generate_brand_story, generate_visual_profile, generate_consistency_score
+from utils.llm_providers import generate_brand_story  # Updated import path
+from utils.visuals import generate_visual_profile, generate_consistency_score  # Updated import path
 
 # Initialize Flask app
 app = Flask(__name__)
