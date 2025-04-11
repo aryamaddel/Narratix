@@ -1,12 +1,9 @@
-import logging
 import random
-import re
 import os
 import json
 from typing import Dict, List, Any, Optional
 import google.generativeai as genai
 
-logger = logging.getLogger(__name__)
 
 # Configure Gemini API if environment variable is set
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -14,13 +11,10 @@ if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         GEMINI_AVAILABLE = True
-        logger.info("Gemini API configured successfully")
     except Exception as e:
-        logger.error(f"Failed to configure Gemini API: {str(e)}")
         GEMINI_AVAILABLE = False
 else:
     GEMINI_AVAILABLE = False
-    logger.warning("Gemini API key not found in environment variables")
 
 
 def generate_with_gemini(
@@ -61,24 +55,24 @@ def generate_with_gemini(
         # Create the prompt for Gemini
         prompt = f"""
         Generate a comprehensive brand story for "{brand_name}".
-        
+
         Brand Description: {description}
-        
+
         Key Information:
         - Keywords: {', '.join(keywords) if keywords else "professional, quality, service, innovation"}
         - Key Values: {', '.join(key_values) if key_values else "Quality, Innovation, Customer Focus, Excellence, Integrity"}
         - Dominant Brand Tone: {dominant_tone.capitalize()}
         - Brand Sentiment: Polarity: {sentiment.get('polarity', 0.1)}, Subjectivity: {sentiment.get('subjectivity', 0.3)}
-        
+
         Social Media Presence: {json.dumps(social_platforms) if social_platforms else "Limited or private channels."}
-        
+
         Format the brand story with these sections using markdown:
         1. Introduction - Begin with "# {brand_name}: Brand Story" and introduce the brand
         2. Core Values - Describe the key values that define the brand
         3. Brand Voice & Tone - Explain the communication style and key themes/language
         4. Social Media Presence - Detail how the brand engages on different platforms
         5. Conclusion - Summarize the brand's positioning and future vision
-        
+
         The story should be professional, insightful, and accurately reflect the brand's identity based on the provided information.
         """
 
@@ -108,11 +102,9 @@ def generate_with_gemini(
         if response and hasattr(response, "text"):
             return response.text
         else:
-            logger.warning("Gemini returned an invalid response")
             return None
 
     except Exception as e:
-        logger.error(f"Error generating brand story with Gemini: {str(e)}")
         return None
 
 
@@ -125,12 +117,7 @@ def generate_brand_story(brand_name, description, analysis, social_content):
                 brand_name, description, analysis, social_content
             )
             if gemini_story:
-                logger.info("Successfully generated brand story using Gemini AI")
                 return gemini_story
-            else:
-                logger.warning(
-                    "Gemini AI generation failed, falling back to rule-based generation"
-                )
 
         # Extract key components from the analysis
         keywords = analysis.get("keywords", [])
@@ -194,8 +181,6 @@ def generate_brand_story(brand_name, description, analysis, social_content):
         return brand_story
 
     except Exception as e:
-        logger.error(f"Error generating brand story: {str(e)}")
-
         # Create a simple fallback brand story
         fallback_brand_story = f"""# {brand_name}: Brand Story
 
@@ -277,7 +262,6 @@ def generate_brand_intro(brand_name, description, key_values, tone):
 
         return intro
     except Exception as e:
-        logger.warning(f"Error generating introduction: {str(e)}")
         return f"# {brand_name}: Brand Story\n\n## Introduction\n\n{brand_name} is a professional organization known for quality products and services. {description}"
 
 
@@ -349,7 +333,6 @@ def generate_brand_values(brand_name, key_values, tone):
 
         return values_section
     except Exception as e:
-        logger.warning(f"Error generating values section: {str(e)}")
         return f"## Core Values\n\n{brand_name} is guided by the following principles:\n\n- **Quality**: Delivering exceptional products and services.\n- **Innovation**: Pioneering new approaches and solutions.\n- **Customer Focus**: Putting customers at the center of every decision."
 
 
@@ -418,7 +401,6 @@ def generate_brand_voice(tone, tone_analysis, keywords):
 
         return voice_section
     except Exception as e:
-        logger.warning(f"Error generating voice section: {str(e)}")
         return "## Brand Voice & Tone\n\nThe brand communicates with a professional voice that inspires confidence while remaining approachable. Key themes include **quality**, **service**, and **expertise**."
 
 
@@ -513,7 +495,6 @@ def generate_social_presence(brand_name, social_content):
 
         return social_presence
     except Exception as e:
-        logger.warning(f"Error generating social presence section: {str(e)}")
         return f"## Social Media Presence\n\n{brand_name} maintains a strategic social media presence across key platforms, engaging with audiences in a way that reflects the brand's values and communication style."
 
 
@@ -549,7 +530,6 @@ def generate_brand_conclusion(brand_name, key_values, tone):
 
         return conclusion_section
     except Exception as e:
-        logger.warning(f"Error generating conclusion section: {str(e)}")
         return f"## Conclusion\n\n{brand_name} continues to set industry standards through its unwavering commitment to quality and strategic vision, positioning itself as a trusted authority in its field."
 
 
@@ -680,8 +660,6 @@ def generate_visual_profile(analysis):
             "tone_indicators": tone_indicators,
         }
     except Exception as e:
-        logger.error(f"Error generating visual profile: {str(e)}")
-
         # Return default visual profile
         return {
             "color_palette": {
@@ -843,5 +821,4 @@ def generate_consistency_score(website_content, social_content, analysis):
 
         return int(score)
     except Exception as e:
-        logger.error(f"Error calculating consistency score: {str(e)}")
         return 70  # Return default score

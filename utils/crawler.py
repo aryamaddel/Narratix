@@ -1,15 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-import logging
 import json
 import os
 from urllib.parse import urlparse, urljoin
 import random
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-
-logger = logging.getLogger(__name__)
 
 
 def get_requests_session():
@@ -147,7 +144,6 @@ def extract_social_links(url):
         if site_platform:
             # Add the site itself as a social link
             social_links.append({"platform": site_platform, "url": url})
-            logger.info(f"URL is itself a {site_platform} social media site")
 
         headers = {
             "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{random.randint(90, 110)}.0.{random.randint(4000, 5000)}.{random.randint(100, 200)} Safari/537.36",
@@ -163,14 +159,12 @@ def extract_social_links(url):
             response = session.get(url, headers=headers, timeout=10)
             response.raise_for_status()
         except Exception as e:
-            logger.warning(f"Error fetching {url}: {str(e)}")
             return social_links  # Return what we've found so far (may include the site itself)
 
         # Parse content
         try:
             soup = BeautifulSoup(response.content, "html.parser")
         except Exception as e:
-            logger.error(f"Error parsing HTML: {str(e)}")
             return social_links  # Return what we've found so far
 
         domain = extract_domain(url)
@@ -219,10 +213,9 @@ def extract_social_links(url):
                             found_platforms.add(platform)
                             break
                 except Exception as e:
-                    logger.debug(f"Error processing link: {str(e)}")
                     continue
         except Exception as e:
-            logger.warning(f"Error extracting links: {str(e)}")
+            pass
 
         # STRATEGY 2: Look for social media meta tags
         try:
@@ -275,7 +268,7 @@ def extract_social_links(url):
                     except Exception:
                         continue
         except Exception as e:
-            logger.warning(f"Error processing meta tags: {str(e)}")
+            pass
 
         # STRATEGY 3: Look for social links in common footer/header elements
         try:
@@ -303,7 +296,7 @@ def extract_social_links(url):
                     except Exception:
                         continue
         except Exception as e:
-            logger.warning(f"Error processing containers: {str(e)}")
+            pass
 
         # STRATEGY 4: Look for icon class names that might indicate social links
         try:
@@ -370,7 +363,7 @@ def extract_social_links(url):
                     except Exception:
                         continue
         except Exception as e:
-            logger.warning(f"Error processing social icons: {str(e)}")
+            pass
 
         # STRATEGY 5: Look for common social sharing buttons
         try:
@@ -408,7 +401,7 @@ def extract_social_links(url):
                     except Exception:
                         continue
         except Exception as e:
-            logger.warning(f"Error processing share buttons: {str(e)}")
+            pass
 
         # STRATEGY 6: Look for common text patterns associated with social media
         try:
@@ -493,7 +486,7 @@ def extract_social_links(url):
                         found_platforms.add(platform)
                         break
         except Exception as e:
-            logger.warning(f"Error processing text patterns: {str(e)}")
+            pass
 
         # Remove duplicates while preserving order
         unique_links = []
@@ -511,7 +504,6 @@ def extract_social_links(url):
         return unique_links
 
     except Exception as e:
-        logger.error(f"Error extracting social links: {str(e)}")
         return social_links  # Return what we've found so far
 
 
@@ -535,7 +527,6 @@ def extract_website_content(url):
         # Handle special case for social media platforms
         platform = detect_platform_from_url(url)
         if platform:
-            logger.info(f"URL is a {platform} page - using platform name as brand name")
             default_brand_name = platform.capitalize()
 
         session = get_requests_session()
@@ -545,7 +536,6 @@ def extract_website_content(url):
             response = session.get(url, headers=headers, timeout=10)
             response.raise_for_status()
         except Exception as e:
-            logger.warning(f"Error fetching {url}: {str(e)}")
             return {
                 "brand_name": default_brand_name,
                 "description": f"Website for {default_brand_name}",
@@ -556,7 +546,6 @@ def extract_website_content(url):
         try:
             soup = BeautifulSoup(response.content, "html.parser")
         except Exception as e:
-            logger.error(f"Error parsing HTML: {str(e)}")
             return {
                 "brand_name": default_brand_name,
                 "description": f"Website for {default_brand_name}",
@@ -587,7 +576,7 @@ def extract_website_content(url):
                     # Remove common suffixes like "- Home" or "| Official Website"
                     brand_name = re.sub(r"\s*[-|]\s*.*$", "", title).strip()
             except Exception as e:
-                logger.debug(f"Error extracting title: {str(e)}")
+                pass
 
             # STRATEGY 2: Get from meta tags
             if not brand_name or brand_name.lower() in ["home", "welcome", "index"]:
@@ -610,7 +599,7 @@ def extract_website_content(url):
                             ]:
                                 break
                 except Exception as e:
-                    logger.debug(f"Error extracting meta title: {str(e)}")
+                    pass
 
             # STRATEGY 3: Get from logo alt text or image filename
             if not brand_name or brand_name.lower() in ["home", "welcome", "index"]:
@@ -655,7 +644,7 @@ def extract_website_content(url):
                                     brand_name = name
                                     break
                 except Exception as e:
-                    logger.debug(f"Error extracting from logo: {str(e)}")
+                    pass
 
             # STRATEGY 4: Get from structured data
             if not brand_name or brand_name.lower() in ["home", "welcome", "index"]:
@@ -674,7 +663,7 @@ def extract_website_content(url):
                         except:
                             pass
                 except Exception as e:
-                    logger.debug(f"Error extracting from structured data: {str(e)}")
+                    pass
 
         # Fallback to domain name or platform name
         if not brand_name or brand_name.lower() in ["home", "welcome", "index"]:
@@ -689,7 +678,7 @@ def extract_website_content(url):
             if meta_desc and meta_desc.get("content"):
                 description = meta_desc["content"].strip()
         except Exception as e:
-            logger.debug(f"Error extracting description meta tag: {str(e)}")
+            pass
 
         # STRATEGY 2: Get from Open Graph description
         if not description:
@@ -698,7 +687,7 @@ def extract_website_content(url):
                 if og_desc and og_desc.get("content"):
                     description = og_desc["content"].strip()
             except Exception as e:
-                logger.debug(f"Error extracting og:description: {str(e)}")
+                pass
 
         # STRATEGY 3: Get from Twitter description
         if not description:
@@ -707,7 +696,7 @@ def extract_website_content(url):
                 if twitter_desc and twitter_desc.get("content"):
                     description = twitter_desc["content"].strip()
             except Exception as e:
-                logger.debug(f"Error extracting twitter:description: {str(e)}")
+                pass
 
         # Extract main content using multiple strategies
         main_content = ""
@@ -737,7 +726,7 @@ def extract_website_content(url):
                     except Exception:
                         continue
         except Exception as e:
-            logger.debug(f"Error extracting main content: {str(e)}")
+            pass
 
         # STRATEGY 2: Get text from paragraphs
         if not main_content or len(main_content) < 200:
@@ -762,7 +751,7 @@ def extract_website_content(url):
                     else:
                         main_content = " ".join(paragraphs)
             except Exception as e:
-                logger.debug(f"Error extracting paragraphs: {str(e)}")
+                pass
 
         # STRATEGY 3: Get all text from body if still insufficient
         if not main_content or len(main_content) < 200:
@@ -771,7 +760,7 @@ def extract_website_content(url):
                 if body:
                     main_content = body.get_text(separator=" ", strip=True)
             except Exception as e:
-                logger.debug(f"Error extracting body text: {str(e)}")
+                pass
 
         # Clean up the content
         try:
@@ -883,9 +872,9 @@ def extract_website_content(url):
                             else:
                                 main_content = about_content
                 except Exception as e:
-                    logger.warning(f"Error fetching about page: {str(e)}")
+                    pass
         except Exception as e:
-            logger.warning(f"Error processing about page links: {str(e)}")
+            pass
 
         # Handle social media platform sites specially
         if platform and (not main_content or len(main_content) < 200):
@@ -917,7 +906,6 @@ def extract_website_content(url):
         }
 
     except Exception as e:
-        logger.error(f"Error extracting website content: {str(e)}")
         domain = extract_domain(url)
         default_brand_name = domain.replace("www.", "")
         default_brand_name = re.sub(
