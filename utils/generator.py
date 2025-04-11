@@ -9,13 +9,106 @@ brand story, visual profile, and consistency score.
 import logging
 import random
 import re
+import os
+import json
+from typing import Dict, List, Any, Optional
+import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
+
+# Configure Gemini API if environment variable is set
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        GEMINI_AVAILABLE = True
+        logger.info("Gemini API configured successfully")
+    except Exception as e:
+        logger.error(f"Failed to configure Gemini API: {str(e)}")
+        GEMINI_AVAILABLE = False
+else:
+    GEMINI_AVAILABLE = False
+    logger.warning("Gemini API key not found in environment variables")
+
+
+def generate_with_gemini(brand_name: str, description: str, analysis: Dict[str, Any], social_content: List[Dict[str, Any]]) -> Optional[str]:
+    """Generate a brand story using Google's Gemini AI model"""
+    if not GEMINI_AVAILABLE:
+        return None
+        
+    try:
+        # Extract key components from the analysis
+        keywords = analysis.get("keywords", [])
+        key_values = analysis.get("key_values", [])
+        tone_analysis = analysis.get("tone_analysis", {})
+        sentiment = analysis.get("sentiment", {})
+        
+        # Determine the dominant tone
+        dominant_tone = max(tone_analysis.items(), key=lambda x: x[1])[0] if tone_analysis else "professional"
+        
+        # Prepare social media information
+        social_platforms = []
+        for platform in social_content:
+            platform_info = {
+                "platform": platform.get("platform", "Unknown"),
+                "followers": platform.get("followers", "N/A"),
+                "engagement": platform.get("engagement", "Medium"),
+                "frequency": platform.get("frequency", "Regular"),
+            }
+            social_platforms.append(platform_info)
+        
+        # Create the prompt for Gemini
+        prompt = f"""
+        Generate a comprehensive brand story for "{brand_name}".
+        
+        Brand Description: {description}
+        
+        Key Information:
+        - Keywords: {', '.join(keywords) if keywords else "professional, quality, service, innovation"}
+        - Key Values: {', '.join(key_values) if key_values else "Quality, Innovation, Customer Focus, Excellence, Integrity"}
+        - Dominant Brand Tone: {dominant_tone.capitalize()}
+        - Brand Sentiment: Polarity: {sentiment.get('polarity', 0.1)}, Subjectivity: {sentiment.get('subjectivity', 0.3)}
+        
+        Social Media Presence: {json.dumps(social_platforms) if social_platforms else "Limited or private channels."}
+        
+        Format the brand story with these sections using markdown:
+        1. Introduction - Begin with "# {brand_name}: Brand Story" and introduce the brand
+        2. Core Values - Describe the key values that define the brand
+        3. Brand Voice & Tone - Explain the communication style and key themes/language
+        4. Social Media Presence - Detail how the brand engages on different platforms
+        5. Conclusion - Summarize the brand's positioning and future vision
+        
+        The story should be professional, insightful, and accurately reflect the brand's identity based on the provided information.
+        """
+        
+        # Generate content with Gemini
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content(prompt)
+        
+        # Return the generated story
+        if response and hasattr(response, 'text'):
+            return response.text
+        else:
+            logger.warning("Gemini returned an invalid response")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error generating brand story with Gemini: {str(e)}")
+        return None
 
 
 def generate_brand_story(brand_name, description, analysis, social_content):
     """Generate a compelling brand story based on the analysis"""
     try:
+        # Try to generate with Gemini first if available
+        if GEMINI_AVAILABLE:
+            gemini_story = generate_with_gemini(brand_name, description, analysis, social_content)
+            if gemini_story:
+                logger.info("Successfully generated brand story using Gemini AI")
+                return gemini_story
+            else:
+                logger.warning("Gemini AI generation failed, falling back to rule-based generation")
+                
         # Extract key components from the analysis
         keywords = analysis.get("keywords", [])
         key_values = analysis.get("key_values", [])
