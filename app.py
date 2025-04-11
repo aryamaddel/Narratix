@@ -1,6 +1,3 @@
-# --- START OF FILE app.py ---
-
-import os
 from urllib.parse import urlparse
 from flask import Flask, render_template, request, jsonify
 
@@ -185,6 +182,3 @@ def analyze_website():
         # Return our default result with the error message
         result["error"] = str(e)
         return jsonify(result)
-
-
-# --- END OF FILE app.py ---
