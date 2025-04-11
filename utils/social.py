@@ -1015,27 +1015,36 @@ def extract_from_youtube(url, soup):
     follower_count = extract_count_from_text(
         page_text, platform_config.get("follower_patterns", [])
     )
-
+    
     # If no follower count found using patterns, try specific YouTube selectors
     if not follower_count:
-        # Look for the specific YouTube subscribers element
-        subscriber_elements = soup.select(
-            ".yt-core-attributed-string.yt-content-metadata-view-model-wiz__metadata-text"
-        )
-        if (
-            not subscriber_elements
-        ):  # Try alternative selectors if first one doesn't work
-            subscriber_elements = soup.select(
-                ".yt-content-metadata-view-model-wiz__metadata-text"
-            )
-
-        for element in subscriber_elements:
-            element_text = element.get_text().strip()
-            if "subscriber" in element_text.lower():
-                number_match = re.search(r"([\d,.]+[kKmM]?)", element_text)
-                if number_match:
-                    follower_count = number_match.group(1)
-                    break
+        # Try multiple selector formats to find subscriber count
+        for subscriber_selector in [
+            ".yt-core-attributed-string.yt-content-metadata-view-model-wiz__metadata-text",
+            ".yt-content-metadata-view-model-wiz__metadata-text",
+            "span[role='text']",  # More generic selector
+            "[class*='subscriber']", # Target any class containing 'subscriber'
+            "[class*='yt-core-attributed-string']", # More generic YouTube text
+        ]:
+            subscriber_elements = soup.select(subscriber_selector)
+            
+            for element in subscriber_elements:
+                element_text = element.get_text().strip()
+                if "subscriber" in element_text.lower():
+                    number_match = re.search(r"([\d,.]+[kKmM]?)", element_text)
+                    if number_match:
+                        follower_count = number_match.group(1)
+                        break
+            
+            if follower_count:
+                break
+                
+        # If still not found, try searching directly in page text for subscriber patterns
+        if not follower_count:
+            subscriber_pattern = r"([\d,.]+[kKmM]?)\s*subscribers?"
+            subscriber_match = re.search(subscriber_pattern, page_text, re.IGNORECASE)
+            if subscriber_match:
+                follower_count = subscriber_match.group(1)
 
     # YouTube typically has medium to high engagement
     engagement_level = "Medium"
@@ -1045,12 +1054,16 @@ def extract_from_youtube(url, soup):
     # Estimate posting frequency
     posting_frequency = estimate_posting_frequency(posts, page_text)
 
+    # Ensure normalized subscriber count
+    if follower_count:
+        follower_count = normalize_follower_count(follower_count)
+
     return {
         "platform": "YouTube",
         "type": platform_config["type"],
         "bio": bio,
         "posts": posts,
-        "subscribers": follower_count,  # Use subscribers instead of followers for YouTube
+        "subscribers": follower_count, 
         "engagement": engagement_level,
         "frequency": posting_frequency,
     }
