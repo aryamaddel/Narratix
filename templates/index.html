@@ -14,326 +14,14 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Custom CSS -->
-    <style>
-        :root {
-            --primary-color: #4361ee;
-            --secondary-color: #7209b7;
-            --accent-color: #f72585;
-            --dark-color: #3a0ca3;
-            --light-color: #f8f9fa;
-            --success-color: #4cc9f0;
-        }
-        
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 600;
-        }
-        
-        .navbar {
-            background-color: white;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-        
-        .brand-highlight {
-            color: var(--accent-color);
-        }
-        
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-color) 100%);
-            color: white;
-            padding: 5rem 0;
-            border-radius: 0 0 25px 25px;
-            margin-bottom: 2rem;
-        }
-        
-        .hero-title {
-            font-size: 2.8rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-        }
-        
-        .hero-subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            margin-bottom: 2rem;
-        }
-        
-        .input-card {
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            margin-top: -4rem;
-        }
-        
-        .form-control {
-            border-radius: 10px;
-            padding: 0.8rem 1rem;
-            font-size: 1rem;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            border-radius: 10px;
-            padding: 0.8rem 2rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--dark-color);
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .feature-card {
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            height: 100%;
-            transition: all 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
-        
-        .result-section {
-            display: none;
-            margin-top: 3rem;
-        }
-        
-        .result-card {
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .nav-tabs {
-            border-bottom: none;
-            margin-bottom: 1.5rem;
-        }
-        
-        .nav-tabs .nav-link {
-            border: none;
-            border-radius: 10px;
-            padding: 0.8rem 1.5rem;
-            margin-right: 0.5rem;
-            color: #666;
-            font-weight: 500;
-        }
-        
-        .nav-tabs .nav-link.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .brand-story-content {
-            white-space: pre-line;
-        }
-        
-        .social-badge {
-            background-color: #f1f3f9;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-            display: inline-block;
-            font-size: 0.9rem;
-        }
-        
-        .social-badge i {
-            margin-right: 0.5rem;
-        }
-        
-        .facebook {
-            background-color: #e7f0ff;
-            color: #1877f2;
-        }
-        
-        .twitter {
-            background-color: #e6f8ff;
-            color: #1da1f2;
-        }
-        
-        .instagram {
-            background-color: #fce8f4;
-            color: #c32aa3;
-        }
-        
-        .linkedin {
-            background-color: #e7f1ff;
-            color: #0a66c2;
-        }
-        
-        .youtube {
-            background-color: #ffebee;
-            color: #ff0000;
-        }
-        
-        .tiktok {
-            background-color: #f4f4f4;
-            color: #000000;
-        }
-        
-        .pinterest {
-            background-color: #ffecee;
-            color: #e60023;
-        }
-        
-        .github {
-            background-color: #f0f0f0;
-            color: #333333;
-        }
-        
-        .medium {
-            background-color: #f0f0f0;
-            color: #00ab6c;
-        }
-        
-        .color-swatch {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
-            display: inline-block;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-        
-        .tone-bar {
-            height: 30px;
-            background-color: var(--primary-color);
-            border-radius: 15px;
-            margin-bottom: 1rem;
-            position: relative;
-        }
-        
-        .tone-label {
-            position: absolute;
-            left: 15px;
-            top: 5px;
-            color: white;
-            font-weight: 500;
-            font-size: 0.85rem;
-        }
-        
-        .tone-value {
-            position: absolute;
-            right: 15px;
-            top: 5px;
-            color: white;
-            font-weight: 500;
-            font-size: 0.85rem;
-        }
-        
-        .value-badge {
-            background-color: #f1f3f9;
-            padding: 0.5rem 1rem;
-            border-radius: 10px;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-            display: inline-block;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: var(--primary-color);
-            border: 1px solid rgba(67, 97, 238, 0.2);
-        }
-        
-        .keyword-badge {
-            background-color: #f1f3f9;
-            padding: 0.3rem 0.8rem;
-            border-radius: 5px;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-            display: inline-block;
-            font-size: 0.85rem;
-            color: #555;
-        }
-        
-        #loadingSpinner {
-            display: none;
-        }
-        
-        .progress-bar-animated {
-            animation: progress-bar-stripes 1s linear infinite;
-        }
-        
-        .consistency-score {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        
-        .score-circle {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            background-color: #f1f3f9;
-            border: 8px solid;
-        }
-        
-        .score-circle.excellent {
-            border-color: #4CC9F0;
-        }
-        
-        .score-circle.good {
-            border-color: #5BC0BE;
-        }
-        
-        .score-circle.average {
-            border-color: #FFC857;
-        }
-        
-        .score-circle.needs-work {
-            border-color: #FF5A5F;
-        }
-        
-        footer {
-            background-color: white;
-            padding: 1.5rem 0;
-            border-top: 1px solid #eee;
-            margin-top: 3rem;
-        }
-    </style>
+    <!-- Custom CSS - Minimal -->
+    <link rel="stylesheet" href="/static/css/custom.css">
 </head>
-<body>
+<body class="bg-light font-poppins">
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="#">Narratix</a>
+            <a class="navbar-brand fw-bold text-primary" href="#">Narratix</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -351,15 +39,15 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
+    <section class="hero-section text-white rounded-bottom-4 mb-4">
+        <div class="container py-5">
             <div class="row align-items-center">
                 <div class="col-lg-7">
-                    <h1 class="hero-title">Transform Any Website Into a Complete Brand Story</h1>
-                    <p class="hero-subtitle">Enter a website URL and let our AI analyze social media links, website content, and audience engagement to craft a compelling brand narrative.</p>
+                    <h1 class="fw-bold display-5 mb-4">Transform Any Website Into a Complete Brand Story</h1>
+                    <p class="lead opacity-90 mb-4">Enter a website URL and let our AI analyze social media links, website content, and audience engagement to craft a compelling brand narrative.</p>
                 </div>
                 <div class="col-lg-5">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="JavaScript Icon" class="d-none"> <!-- Preload CDN -->
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="JavaScript Icon" class="d-none">
                 </div>
             </div>
         </div>
@@ -370,23 +58,25 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <div class="input-card">
-                        <h3 class="mb-4 text-center">Decode Any Brand</h3>
-                        <div class="mb-4">
-                            <label for="websiteUrl" class="form-label">Enter Website URL</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="websiteUrl" placeholder="example.com">
-                                <button class="btn btn-primary" id="analyzeBtn">
-                                    <span class="analyze-text">Analyze Brand</span>
-                                    <div id="loadingSpinner" class="spinner-border spinner-border-sm ms-2" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                </button>
+                    <div class="card shadow-sm border-0 rounded-4 mb-5">
+                        <div class="card-body p-4">
+                            <h3 class="mb-4 text-center">Decode Any Brand</h3>
+                            <div class="mb-4">
+                                <label for="websiteUrl" class="form-label">Enter Website URL</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control rounded-start-3" id="websiteUrl" placeholder="example.com">
+                                    <button class="btn btn-primary rounded-end-3" id="analyzeBtn">
+                                        <span class="analyze-text">Analyze Brand</span>
+                                        <div id="loadingSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </button>
+                                </div>
+                                <div class="form-text">Just enter the domain - no need for http:// or www</div>
                             </div>
-                            <div class="form-text">Just enter the domain - no need for http:// or www</div>
-                        </div>
-                        <div class="progress d-none" id="progressBar">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            <div class="progress d-none" id="progressBar">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -395,33 +85,35 @@
     </section>
 
     <!-- Results Section (initially hidden) -->
-    <section class="result-section" id="resultSection">
+    <section class="d-none" id="resultSection">
         <div class="container">
             <!-- Brand Overview -->
-            <div class="result-card">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 id="brandName">Brand Name</h2>
-                    <div class="consistency-score">
-                        <div class="score-circle" id="scoreCircle">
-                            <span id="consistencyScore">0</span>
-                        </div>
-                        <p class="mt-2 mb-0">Brand Consistency</p>
-                    </div>
-                </div>
-                
-                <p class="lead" id="brandDescription">Brand description will appear here.</p>
-                
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <h5>Key Values</h5>
-                        <div id="keyValues">
-                            <!-- Value badges will be inserted here -->
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 id="brandName">Brand Name</h2>
+                        <div class="text-center">
+                            <div class="score-circle" id="scoreCircle">
+                                <span id="consistencyScore">0</span>
+                            </div>
+                            <p class="mt-2 mb-0">Brand Consistency</p>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <h5>Social Presence</h5>
-                        <div id="socialLinks">
-                            <!-- Social badges will be inserted here -->
+                    
+                    <p class="lead" id="brandDescription">Brand description will appear here.</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h5>Key Values</h5>
+                            <div id="keyValues">
+                                <!-- Value badges will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Social Presence</h5>
+                            <div id="socialLinks">
+                                <!-- Social badges will be inserted here -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -446,27 +138,31 @@
             <div class="tab-content">
                 <!-- Brand Story Tab -->
                 <div class="tab-pane fade show active" id="story" role="tabpanel">
-                    <div class="result-card">
-                        <div id="brandStoryContent" class="brand-story-content">
-                            <!-- Brand story will be inserted here -->
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div id="brandStoryContent" class="brand-story-content">
+                                <!-- Brand story will be inserted here -->
+                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Tone & Keywords Tab -->
                 <div class="tab-pane fade" id="tone" role="tabpanel">
-                    <div class="result-card">
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <h4>Tone Analysis</h4>
-                                <div id="toneAnalysis">
-                                    <!-- Tone bars will be inserted here -->
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <h4>Tone Analysis</h4>
+                                    <div id="toneAnalysis">
+                                        <!-- Tone bars will be inserted here -->
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <h4>Key Keywords</h4>
-                                <div id="keyKeywords">
-                                    <!-- Keyword badges will be inserted here -->
+                                <div class="col-md-6 mb-4">
+                                    <h4>Key Keywords</h4>
+                                    <div id="keyKeywords">
+                                        <!-- Keyword badges will be inserted here -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -475,25 +171,27 @@
                 
                 <!-- Visual Profile Tab -->
                 <div class="tab-pane fade" id="visual" role="tabpanel">
-                    <div class="result-card">
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <h4>Suggested Color Palette</h4>
-                                <div id="colorPalette">
-                                    <!-- Color swatches will be inserted here -->
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <h4>Suggested Color Palette</h4>
+                                    <div id="colorPalette">
+                                        <!-- Color swatches will be inserted here -->
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <h4>Typography</h4>
+                                    <div id="typography">
+                                        <!-- Typography will be inserted here -->
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-4">
-                                <h4>Typography</h4>
-                                <div id="typography">
-                                    <!-- Typography will be inserted here -->
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <h4>Recommended Image Style</h4>
+                                    <p id="imageStyle"></p>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="row mt-2">
-                            <div class="col-12">
-                                <h4>Recommended Image Style</h4>
-                                <p id="imageStyle"></p>
                             </div>
                         </div>
                     </div>
@@ -501,21 +199,23 @@
                 
                 <!-- Social Analysis Tab -->
                 <div class="tab-pane fade" id="social" role="tabpanel">
-                    <div class="result-card">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Platform</th>
-                                        <th>Followers</th>
-                                        <th>Engagement</th>
-                                        <th>Frequency</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="socialAnalytics">
-                                    <!-- Social analytics will be inserted here -->
-                                </tbody>
-                            </table>
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Platform</th>
+                                            <th>Followers</th>
+                                            <th>Engagement</th>
+                                            <th>Frequency</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="socialAnalytics">
+                                        <!-- Social analytics will be inserted here -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -529,39 +229,47 @@
             <h2 class="text-center mb-5">How Narratix Works</h2>
             <div class="row">
                 <div class="col-md-3 mb-4">
-                    <div class="feature-card text-center">
-                        <div class="feature-icon">
+                    <div class="card shadow-sm border-0 rounded-4 h-100 text-center p-3">
+                        <div class="py-3 text-primary fs-1">
                             <i class="fas fa-globe"></i>
                         </div>
-                        <h5>1. Website Crawling</h5>
-                        <p>We scan the website to extract content and detect all social media profiles.</p>
+                        <div class="card-body">
+                            <h5>1. Website Crawling</h5>
+                            <p class="card-text">We scan the website to extract content and detect all social media profiles.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3 mb-4">
-                    <div class="feature-card text-center">
-                        <div class="feature-icon">
+                    <div class="card shadow-sm border-0 rounded-4 h-100 text-center p-3">
+                        <div class="py-3 text-primary fs-1">
                             <i class="fas fa-hashtag"></i>
                         </div>
-                        <h5>2. Social Analysis</h5>
-                        <p>We analyze recent posts and engagement data across all platforms.</p>
+                        <div class="card-body">
+                            <h5>2. Social Analysis</h5>
+                            <p class="card-text">We analyze recent posts and engagement data across all platforms.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3 mb-4">
-                    <div class="feature-card text-center">
-                        <div class="feature-icon">
+                    <div class="card shadow-sm border-0 rounded-4 h-100 text-center p-3">
+                        <div class="py-3 text-primary fs-1">
                             <i class="fas fa-chart-line"></i>
                         </div>
-                        <h5>3. Content Analysis</h5>
-                        <p>Our AI identifies key values, tone, and brand voice from the collected data.</p>
+                        <div class="card-body">
+                            <h5>3. Content Analysis</h5>
+                            <p class="card-text">Our AI identifies key values, tone, and brand voice from the collected data.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3 mb-4">
-                    <div class="feature-card text-center">
-                        <div class="feature-icon">
+                    <div class="card shadow-sm border-0 rounded-4 h-100 text-center p-3">
+                        <div class="py-3 text-primary fs-1">
                             <i class="fas fa-feather-alt"></i>
                         </div>
-                        <h5>4. Story Generation</h5>
-                        <p>We craft a compelling brand narrative that captures the essence of the brand.</p>
+                        <div class="card-body">
+                            <h5>4. Story Generation</h5>
+                            <p class="card-text">We craft a compelling brand narrative that captures the essence of the brand.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -574,39 +282,51 @@
             <h2 class="text-center mb-5">Key Features</h2>
             <div class="row">
                 <div class="col-md-4 mb-4">
-                    <div class="feature-card h-100">
-                        <h5><i class="fas fa-bolt text-primary me-2"></i> Instant Brand Analysis</h5>
-                        <p>Generate a complete brand profile in seconds, not days. Perfect for agencies, marketers, and founders who need quick insights.</p>
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-bolt text-primary me-2"></i> Instant Brand Analysis</h5>
+                            <p class="card-text">Generate a complete brand profile in seconds, not days. Perfect for agencies, marketers, and founders who need quick insights.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-4">
-                    <div class="feature-card h-100">
-                        <h5><i class="fas fa-layer-group text-primary me-2"></i> Multi-Platform Integration</h5>
-                        <p>Automatically detects and analyzes content from LinkedIn, Instagram, Twitter, Facebook, YouTube, and more.</p>
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-layer-group text-primary me-2"></i> Multi-Platform Integration</h5>
+                            <p class="card-text">Automatically detects and analyzes content from LinkedIn, Instagram, Twitter, Facebook, YouTube, and more.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-4">
-                    <div class="feature-card h-100">
-                        <h5><i class="fas fa-paint-brush text-primary me-2"></i> Visual Identity Suggestions</h5>
-                        <p>Get color palette, typography, and image style recommendations that match the brand's tone and values.</p>
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-paint-brush text-primary me-2"></i> Visual Identity Suggestions</h5>
+                            <p class="card-text">Get color palette, typography, and image style recommendations that match the brand's tone and values.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-4">
-                    <div class="feature-card h-100">
-                        <h5><i class="fas fa-comments text-primary me-2"></i> Tone & Voice Analysis</h5>
-                        <p>Understand how the brand communicates with its audience across different channels.</p>
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-comments text-primary me-2"></i> Tone & Voice Analysis</h5>
+                            <p class="card-text">Understand how the brand communicates with its audience across different channels.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-4">
-                    <div class="feature-card h-100">
-                        <h5><i class="fas fa-bullseye text-primary me-2"></i> Key Value Identification</h5>
-                        <p>Uncover the core values and principles that drive the brand's positioning and messaging.</p>
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-bullseye text-primary me-2"></i> Key Value Identification</h5>
+                            <p class="card-text">Uncover the core values and principles that drive the brand's positioning and messaging.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-4">
-                    <div class="feature-card h-100">
-                        <h5><i class="fas fa-sync text-primary me-2"></i> Consistency Scoring</h5>
-                        <p>Measure how consistently the brand presents itself across different platforms and touchpoints.</p>
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-sync text-primary me-2"></i> Consistency Scoring</h5>
+                            <p class="card-text">Measure how consistently the brand presents itself across different platforms and touchpoints.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -614,14 +334,14 @@
     </section>
 
     <!-- Footer -->
-    <footer>
+    <footer class="bg-white border-top py-3 mt-5">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <p>&copy; 2025 Narratix. All rights reserved.</p>
+                    <p class="mb-0">&copy; 2025 Narratix. All rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-end">
-                    <p>A hackathon project built with Flask & Bootstrap</p>
+                    <p class="mb-0">A hackathon project built with Flask & Bootstrap</p>
                 </div>
             </div>
         </div>
@@ -634,298 +354,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     
     <!-- Custom JavaScript -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Elements
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            const websiteUrl = document.getElementById('websiteUrl');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const progressBar = document.getElementById('progressBar');
-            const resultSection = document.getElementById('resultSection');
-            
-            // Brand elements
-            const brandName = document.getElementById('brandName');
-            const brandDescription = document.getElementById('brandDescription');
-            const keyValues = document.getElementById('keyValues');
-            const socialLinks = document.getElementById('socialLinks');
-            const brandStoryContent = document.getElementById('brandStoryContent');
-            const toneAnalysis = document.getElementById('toneAnalysis');
-            const keyKeywords = document.getElementById('keyKeywords');
-            const colorPalette = document.getElementById('colorPalette');
-            const typography = document.getElementById('typography');
-            const imageStyle = document.getElementById('imageStyle');
-            const socialAnalytics = document.getElementById('socialAnalytics');
-            const consistencyScore = document.getElementById('consistencyScore');
-            const scoreCircle = document.getElementById('scoreCircle');
-            
-            // Set up Markdown converter
-            const converter = new showdown.Converter({
-                tables: true,
-                tasklists: true,
-                strikethrough: true,
-                emoji: true
-            });
-            
-            // Handle analyze button click
-            analyzeBtn.addEventListener('click', function() {
-                const url = websiteUrl.value.trim();
-                
-                if (!url) {
-                    alert('Please enter a website URL');
-                    return;
-                }
-                
-                // Show loading state
-                analyzeBtn.disabled = true;
-                loadingSpinner.style.display = 'inline-block';
-                progressBar.classList.remove('d-none');
-                
-                // Update progress bar (simulated progress)
-                let progress = 0;
-                const progressInterval = setInterval(function() {
-                    progress += 5;
-                    progressBar.querySelector('.progress-bar').style.width = `${Math.min(progress, 95)}%`;
-                    
-                    if (progress >= 95) {
-                        clearInterval(progressInterval);
-                    }
-                }, 500);
-                
-                // Send request to backend
-                fetch('/analyze', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ url: url })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Complete progress bar
-                    progressBar.querySelector('.progress-bar').style.width = '100%';
-                    setTimeout(() => {
-                        progressBar.classList.add('d-none');
-                    }, 500);
-                    
-                    // Process and display results
-                    displayResults(data);
-                    
-                    // Reset loading state
-                    analyzeBtn.disabled = false;
-                    loadingSpinner.style.display = 'none';
-                    
-                    // Show results section
-                    resultSection.style.display = 'block';
-                    
-                    // Scroll to results
-                    resultSection.scrollIntoView({ behavior: 'smooth' });
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error analyzing the website. Please try again.');
-                    
-                    // Reset loading state
-                    analyzeBtn.disabled = false;
-                    loadingSpinner.style.display = 'none';
-                    progressBar.classList.add('d-none');
-                });
-            });
-            
-            // Function to display results
-            function displayResults(data) {
-                // Display brand info
-                brandName.textContent = data.brand_name;
-                brandDescription.textContent = data.brand_description;
-                
-                // Display key values
-                keyValues.innerHTML = '';
-                data.key_values.forEach(value => {
-                    const badge = document.createElement('span');
-                    badge.className = 'value-badge';
-                    badge.textContent = value;
-                    keyValues.appendChild(badge);
-                });
-                
-                // Display social links
-                socialLinks.innerHTML = '';
-                data.social_links.forEach(social => {
-                    const badge = document.createElement('a');
-                    badge.className = `social-badge ${social.platform}`;
-                    badge.href = social.url;
-                    badge.target = '_blank';
-                    
-                    const icon = document.createElement('i');
-                    
-                    // Set appropriate icon class based on platform
-                    if (social.platform === 'facebook') {
-                        icon.className = 'fab fa-facebook-f';
-                    } else if (social.platform === 'twitter') {
-                        icon.className = 'fab fa-twitter';
-                    } else if (social.platform === 'instagram') {
-                        icon.className = 'fab fa-instagram';
-                    } else if (social.platform === 'linkedin') {
-                        icon.className = 'fab fa-linkedin-in';
-                    } else if (social.platform === 'youtube') {
-                        icon.className = 'fab fa-youtube';
-                    } else if (social.platform === 'tiktok') {
-                        icon.className = 'fab fa-tiktok';
-                    } else if (social.platform === 'pinterest') {
-                        icon.className = 'fab fa-pinterest-p';
-                    } else if (social.platform === 'github') {
-                        icon.className = 'fab fa-github';
-                    } else if (social.platform === 'medium') {
-                        icon.className = 'fab fa-medium-m';
-                    } else {
-                        icon.className = 'fas fa-link';
-                    }
-                    
-                    badge.appendChild(icon);
-                    badge.appendChild(document.createTextNode(` ${social.platform.charAt(0).toUpperCase() + social.platform.slice(1)}`));
-                    socialLinks.appendChild(badge);
-                });
-                
-                // If no social links found
-                if (data.social_links.length === 0) {
-                    const noBadge = document.createElement('span');
-                    noBadge.className = 'social-badge';
-                    noBadge.innerHTML = '<i class="fas fa-info-circle"></i> No social media links detected';
-                    socialLinks.appendChild(noBadge);
-                }
-                
-                // Display brand story (convert markdown to HTML)
-                brandStoryContent.innerHTML = converter.makeHtml(data.brand_story);
-                
-                // Display tone analysis
-                toneAnalysis.innerHTML = '';
-                for (const tone of data.visual_profile.tone_indicators) {
-                    const toneContainer = document.createElement('div');
-                    toneContainer.className = 'mb-3';
-                    
-                    const toneBar = document.createElement('div');
-                    toneBar.className = 'tone-bar';
-                    toneBar.style.width = '100%';
-                    toneBar.style.backgroundColor = getColorForTone(tone.name.toLowerCase());
-                    
-                    // Inner bar showing percentage
-                    const innerBar = document.createElement('div');
-                    innerBar.style.width = `${tone.value * 100}%`;
-                    innerBar.style.height = '100%';
-                    innerBar.style.backgroundColor = getColorForTone(tone.name.toLowerCase());
-                    innerBar.style.borderRadius = '15px';
-                    
-                    const toneLabel = document.createElement('div');
-                    toneLabel.className = 'tone-label';
-                    toneLabel.textContent = tone.name;
-                    
-                    const toneValue = document.createElement('div');
-                    toneValue.className = 'tone-value';
-                    toneValue.textContent = `${Math.round(tone.value * 100)}%`;
-                    
-                    toneBar.appendChild(innerBar);
-                    toneBar.appendChild(toneLabel);
-                    toneBar.appendChild(toneValue);
-                    toneContainer.appendChild(toneBar);
-                    
-                    toneAnalysis.appendChild(toneContainer);
-                }
-                
-                // Display keywords
-                keyKeywords.innerHTML = '';
-                data.keywords.forEach(keyword => {
-                    const badge = document.createElement('span');
-                    badge.className = 'keyword-badge';
-                    badge.textContent = keyword;
-                    keyKeywords.appendChild(badge);
-                });
-                
-                // Display color palette
-                colorPalette.innerHTML = '';
-                const colors = data.visual_profile.color_palette;
-                
-                for (const [name, color] of Object.entries(colors)) {
-                    const colorContainer = document.createElement('div');
-                    colorContainer.className = 'd-inline-block me-3 mb-3 text-center';
-                    
-                    const swatch = document.createElement('div');
-                    swatch.className = 'color-swatch';
-                    swatch.style.backgroundColor = color;
-                    
-                    const colorName = document.createElement('small');
-                    colorName.textContent = `${name.charAt(0).toUpperCase() + name.slice(1)}: ${color}`;
-                    
-                    colorContainer.appendChild(swatch);
-                    colorContainer.appendChild(colorName);
-                    colorPalette.appendChild(colorContainer);
-                }
-                
-                // Display typography
-                typography.innerHTML = `
-                    <p><strong>Heading Font:</strong> ${data.visual_profile.font_style.heading}</p>
-                    <p><strong>Body Font:</strong> ${data.visual_profile.font_style.body}</p>
-                    <p><strong>Style Notes:</strong> ${data.visual_profile.font_style.style}</p>
-                `;
-                
-                // Display image style
-                imageStyle.textContent = data.visual_profile.image_style;
-                
-                // Display social analytics
-                socialAnalytics.innerHTML = '';
-                data.social_analytics.forEach(social => {
-                    const row = document.createElement('tr');
-                    
-                    const platformCell = document.createElement('td');
-                    platformCell.innerHTML = `<strong>${social.platform}</strong>`;
-                    
-                    const followersCell = document.createElement('td');
-                    followersCell.textContent = social.followers;
-                    
-                    const engagementCell = document.createElement('td');
-                    engagementCell.textContent = social.engagement;
-                    
-                    const frequencyCell = document.createElement('td');
-                    frequencyCell.textContent = social.frequency;
-                    
-                    row.appendChild(platformCell);
-                    row.appendChild(followersCell);
-                    row.appendChild(engagementCell);
-                    row.appendChild(frequencyCell);
-                    
-                    socialAnalytics.appendChild(row);
-                });
-                
-                // Display consistency score
-                consistencyScore.textContent = data.consistency_score;
-                
-                // Set score circle color
-                if (data.consistency_score >= 85) {
-                    scoreCircle.className = 'score-circle excellent';
-                } else if (data.consistency_score >= 70) {
-                    scoreCircle.className = 'score-circle good';
-                } else if (data.consistency_score >= 50) {
-                    scoreCircle.className = 'score-circle average';
-                } else {
-                    scoreCircle.className = 'score-circle needs-work';
-                }
-            }
-            
-            // Helper function to get color for tone
-            function getColorForTone(tone) {
-                const toneColors = {
-                    'professional': '#0A3D62',
-                    'friendly': '#5E8C61',
-                    'informative': '#3A6EA5',
-                    'enthusiastic': '#E63946',
-                    'formal': '#2D3142'
-                };
-                
-                return toneColors[tone] || '#4361ee';
-            }
-        });
-    </script>
+    <script src="/static/js/main.js"></script>
 </body>
 </html>
