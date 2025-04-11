@@ -1,14 +1,15 @@
 def generate_visual_profile(analysis):
-    """Generate a simple visual profile"""
+    """Generate a simple visual profile with a dark theme"""
     return {
         "color_palette": {
-            "primary": "#0A3D62",  # Dark blue
-            "secondary": "#3E92CC", # Medium blue
-            "accent": "#D8D8D8",    # Light gray
+            "primary": "#8A78EE",  # Purple
+            "secondary": "#6c63a3", # Darker purple
+            "accent": "#f87171",    # Red
         },
         "font_style": {
-            "heading": "Montserrat",
-            "body": "Open Sans",
+            "heading": "Poppins",
+            "body": "Poppins",
+            "style": "Clean with medium contrast for dark backgrounds"
         },
         "tone_indicators": [
             {"name": tone.capitalize(), "value": round(value, 2)}
@@ -17,7 +18,8 @@ def generate_visual_profile(analysis):
                 key=lambda x: x[1],
                 reverse=True
             )[:3]
-        ]
+        ],
+        "image_style": "High contrast imagery with bold colors that stand out against dark backgrounds"
     }
 
 def generate_consistency_score(website_content, social_content, analysis):

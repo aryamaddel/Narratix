@@ -1,82 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Narratix - Website to Brand Story Generator</title>
     
-    <!-- Bootstrap CSS from CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Custom CSS - Minimal -->
+    <!-- Configure Tailwind -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8A78EE',
+                        secondary: '#6c63a3',
+                        accent: '#f87171',
+                    },
+                    fontFamily: {
+                        'poppins': ['"Poppins"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Minimal Custom CSS -->
     <link rel="stylesheet" href="/static/css/custom.css">
 </head>
-<body class="bg-light font-poppins">
+<body class="bg-gray-950 text-gray-100 font-poppins min-h-screen flex flex-col">
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold text-primary" href="#">Narratix</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#how-it-works">How It Works</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#features">Features</a>
-                    </li>
+    <nav class="sticky top-0 bg-gray-900 border-b border-gray-800 z-10">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <a href="#" class="text-xl font-bold text-primary">Narratix</a>
+                <div class="hidden md:block">
+                    <ul class="flex space-x-6">
+                        <li><a href="#how-it-works" class="hover:text-primary transition">How It Works</a></li>
+                        <li><a href="#features" class="hover:text-primary transition">Features</a></li>
+                    </ul>
+                </div>
+                <button class="md:hidden text-gray-100" id="mobile-menu-button">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="md:hidden hidden mt-2" id="mobile-menu">
+                <ul class="flex flex-col space-y-2">
+                    <li><a href="#how-it-works" class="block py-1 hover:text-primary transition">How It Works</a></li>
+                    <li><a href="#features" class="block py-1 hover:text-primary transition">Features</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-section text-white rounded-bottom-4 mb-4">
-        <div class="container py-5">
-            <div class="row align-items-center">
-                <div class="col-lg-7">
-                    <h1 class="fw-bold display-5 mb-4">Transform Any Website Into a Complete Brand Story</h1>
-                    <p class="lead opacity-90 mb-4">Enter a website URL and let our AI analyze social media links, website content, and audience engagement to craft a compelling brand narrative.</p>
-                </div>
-                <div class="col-lg-5">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="JavaScript Icon" class="d-none">
-                </div>
+    <section class="bg-gradient-to-r from-primary to-secondary text-white rounded-b-lg mb-6">
+        <div class="container mx-auto px-4 py-12">
+            <div class="max-w-3xl">
+                <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Transform Any Website Into a Complete Brand Story</h1>
+                <p class="text-lg opacity-90 mb-4">Enter a website URL and let our AI analyze social media links, website content, and audience engagement to craft a compelling brand narrative.</p>
             </div>
         </div>
     </section>
 
     <!-- URL Input Section -->
     <section>
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <div class="card shadow-sm border-0 rounded-4 mb-5">
-                        <div class="card-body p-4">
-                            <h3 class="mb-4 text-center">Decode Any Brand</h3>
-                            <div class="mb-4">
-                                <label for="websiteUrl" class="form-label">Enter Website URL</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control rounded-start-3" id="websiteUrl" placeholder="example.com">
-                                    <button class="btn btn-primary rounded-end-3" id="analyzeBtn">
-                                        <span class="analyze-text">Analyze Brand</span>
-                                        <div id="loadingSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                    </button>
-                                </div>
-                                <div class="form-text">Just enter the domain - no need for http:// or www</div>
+        <div class="container mx-auto px-4">
+            <div class="flex justify-center">
+                <div class="w-full max-w-3xl">
+                    <div class="bg-gray-900 rounded-xl shadow mb-12 p-6">
+                        <h3 class="text-xl font-medium mb-6 text-center">Decode Any Brand</h3>
+                        <div class="mb-6">
+                            <label for="websiteUrl" class="block mb-2 font-medium">Enter Website URL</label>
+                            <div class="flex">
+                                <input type="text" id="websiteUrl" placeholder="example.com" 
+                                       class="flex-grow bg-gray-800 border border-gray-700 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <button id="analyzeBtn" class="bg-primary hover:bg-secondary px-4 py-2 rounded-r-lg text-white transition flex items-center">
+                                    <span class="analyze-text">Analyze Brand</span>
+                                    <div id="loadingSpinner" class="hidden ml-2">
+                                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                </button>
                             </div>
-                            <div class="progress d-none" id="progressBar">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                            </div>
+                            <p class="text-sm text-gray-400 mt-2">Just enter the domain - no need for http:// or www</p>
+                        </div>
+                        <div id="progressBar" class="hidden w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-primary transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
@@ -85,130 +105,114 @@
     </section>
 
     <!-- Results Section (initially hidden) -->
-    <section class="d-none" id="resultSection">
-        <div class="container">
+    <section class="hidden" id="resultSection">
+        <div class="container mx-auto px-4">
             <!-- Brand Overview -->
-            <div class="card shadow-sm border-0 rounded-4 mb-4">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 id="brandName">Brand Name</h2>
-                        <div class="text-center">
-                            <div class="score-circle" id="scoreCircle">
-                                <span id="consistencyScore">0</span>
-                            </div>
-                            <p class="mt-2 mb-0">Brand Consistency</p>
+            <div class="bg-gray-900 rounded-xl shadow mb-6 p-6">
+                <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
+                    <h2 id="brandName" class="text-2xl font-bold">Brand Name</h2>
+                    <div class="text-center">
+                        <div id="scoreCircle" class="w-20 h-20 rounded-full border-4 border-primary flex items-center justify-center mx-auto">
+                            <span id="consistencyScore" class="text-2xl font-bold">0</span>
+                        </div>
+                        <p class="mt-2 mb-0">Brand Consistency</p>
+                    </div>
+                </div>
+                
+                <p id="brandDescription" class="text-lg mb-6">Brand description will appear here.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h5 class="text-lg font-medium mb-3">Key Values</h5>
+                        <div id="keyValues" class="flex flex-wrap gap-2">
+                            <!-- Value badges will be inserted here -->
                         </div>
                     </div>
-                    
-                    <p class="lead" id="brandDescription">Brand description will appear here.</p>
-                    
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <h5>Key Values</h5>
-                            <div id="keyValues">
-                                <!-- Value badges will be inserted here -->
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Social Presence</h5>
-                            <div id="socialLinks">
-                                <!-- Social badges will be inserted here -->
-                            </div>
+                    <div>
+                        <h5 class="text-lg font-medium mb-3">Social Presence</h5>
+                        <div id="socialLinks" class="flex flex-wrap gap-2">
+                            <!-- Social badges will be inserted here -->
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- Tabbed Content -->
-            <ul class="nav nav-tabs" id="brandTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="story-tab" data-bs-toggle="tab" data-bs-target="#story" type="button" role="tab">Brand Story</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tone-tab" data-bs-toggle="tab" data-bs-target="#tone" type="button" role="tab">Tone & Keywords</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="visual-tab" data-bs-toggle="tab" data-bs-target="#visual" type="button" role="tab">Visual Profile</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="social-tab" data-bs-toggle="tab" data-bs-target="#social" type="button" role="tab">Social Analysis</button>
-                </li>
-            </ul>
-            
-            <div class="tab-content">
-                <!-- Brand Story Tab -->
-                <div class="tab-pane fade show active" id="story" role="tabpanel">
-                    <div class="card shadow-sm border-0 rounded-4 mb-4">
-                        <div class="card-body p-4">
-                            <div id="brandStoryContent" class="brand-story-content">
+            <div class="mb-6">
+                <div class="border-b border-gray-800">
+                    <nav class="flex -mb-px flex-wrap">
+                        <button data-tab="story" class="tab-button active px-4 py-2 font-medium border-b-2 border-primary">Brand Story</button>
+                        <button data-tab="tone" class="tab-button px-4 py-2 font-medium border-b-2 border-transparent text-gray-400">Tone & Keywords</button>
+                        <button data-tab="visual" class="tab-button px-4 py-2 font-medium border-b-2 border-transparent text-gray-400">Visual Profile</button>
+                        <button data-tab="social" class="tab-button px-4 py-2 font-medium border-b-2 border-transparent text-gray-400">Social Analysis</button>
+                    </nav>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- Brand Story Tab -->
+                    <div id="story" class="tab-pane active">
+                        <div class="bg-gray-900 rounded-xl shadow p-6 mt-4">
+                            <div id="brandStoryContent" class="prose prose-invert max-w-none">
                                 <!-- Brand story will be inserted here -->
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Tone & Keywords Tab -->
-                <div class="tab-pane fade" id="tone" role="tabpanel">
-                    <div class="card shadow-sm border-0 rounded-4 mb-4">
-                        <div class="card-body p-4">
-                            <div class="row">
-                                <div class="col-md-6 mb-4">
-                                    <h4>Tone Analysis</h4>
+                    
+                    <!-- Tone & Keywords Tab -->
+                    <div id="tone" class="tab-pane hidden">
+                        <div class="bg-gray-900 rounded-xl shadow p-6 mt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-4">Tone Analysis</h4>
                                     <div id="toneAnalysis">
                                         <!-- Tone bars will be inserted here -->
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-4">
-                                    <h4>Key Keywords</h4>
-                                    <div id="keyKeywords">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-4">Key Keywords</h4>
+                                    <div id="keyKeywords" class="flex flex-wrap gap-2">
                                         <!-- Keyword badges will be inserted here -->
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Visual Profile Tab -->
-                <div class="tab-pane fade" id="visual" role="tabpanel">
-                    <div class="card shadow-sm border-0 rounded-4 mb-4">
-                        <div class="card-body p-4">
-                            <div class="row">
-                                <div class="col-md-6 mb-4">
-                                    <h4>Suggested Color Palette</h4>
-                                    <div id="colorPalette">
+                    
+                    <!-- Visual Profile Tab -->
+                    <div id="visual" class="tab-pane hidden">
+                        <div class="bg-gray-900 rounded-xl shadow p-6 mt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-4">Suggested Color Palette</h4>
+                                    <div id="colorPalette" class="flex flex-wrap gap-3">
                                         <!-- Color swatches will be inserted here -->
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-4">
-                                    <h4>Typography</h4>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-4">Typography</h4>
                                     <div id="typography">
                                         <!-- Typography will be inserted here -->
                                     </div>
                                 </div>
                             </div>
-                            <div class="row mt-2">
-                                <div class="col-12">
-                                    <h4>Recommended Image Style</h4>
-                                    <p id="imageStyle"></p>
-                                </div>
+                            <div class="mt-6">
+                                <h4 class="text-lg font-medium mb-2">Recommended Image Style</h4>
+                                <p id="imageStyle"></p>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Social Analysis Tab -->
-                <div class="tab-pane fade" id="social" role="tabpanel">
-                    <div class="card shadow-sm border-0 rounded-4 mb-4">
-                        <div class="card-body p-4">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
+                    
+                    <!-- Social Analysis Tab -->
+                    <div id="social" class="tab-pane hidden">
+                        <div class="bg-gray-900 rounded-xl shadow p-6 mt-4">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="border-b border-gray-800">
                                         <tr>
-                                            <th>Platform</th>
-                                            <th>Followers</th>
-                                            <th>Engagement</th>
-                                            <th>Frequency</th>
+                                            <th class="py-3 px-4">Platform</th>
+                                            <th class="py-3 px-4">Followers</th>
+                                            <th class="py-3 px-4">Engagement</th>
+                                            <th class="py-3 px-4">Frequency</th>
                                         </tr>
                                     </thead>
                                     <tbody id="socialAnalytics">
@@ -224,132 +228,103 @@
     </section>
 
     <!-- How It Works Section -->
-    <section id="how-it-works" class="py-5">
-        <div class="container">
-            <h2 class="text-center mb-5">How Narratix Works</h2>
-            <div class="row">
-                <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100 text-center p-3">
-                        <div class="py-3 text-primary fs-1">
-                            <i class="fas fa-globe"></i>
-                        </div>
-                        <div class="card-body">
-                            <h5>1. Website Crawling</h5>
-                            <p class="card-text">We scan the website to extract content and detect all social media profiles.</p>
-                        </div>
+    <section id="how-it-works" class="py-12">
+        <div class="container mx-auto px-4">
+            <h2 class="text-2xl font-bold mb-8 text-center">How Narratix Works</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-gray-900 rounded-xl p-6 text-center">
+                    <div class="text-primary text-4xl mb-4">
+                        <i class="fas fa-globe"></i>
                     </div>
+                    <h5 class="text-lg font-medium mb-2">1. Website Crawling</h5>
+                    <p class="text-gray-400">We scan the website to extract content and detect all social media profiles.</p>
                 </div>
-                <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100 text-center p-3">
-                        <div class="py-3 text-primary fs-1">
-                            <i class="fas fa-hashtag"></i>
-                        </div>
-                        <div class="card-body">
-                            <h5>2. Social Analysis</h5>
-                            <p class="card-text">We analyze recent posts and engagement data across all platforms.</p>
-                        </div>
+                <div class="bg-gray-900 rounded-xl p-6 text-center">
+                    <div class="text-primary text-4xl mb-4">
+                        <i class="fas fa-hashtag"></i>
                     </div>
+                    <h5 class="text-lg font-medium mb-2">2. Social Analysis</h5>
+                    <p class="text-gray-400">We analyze recent posts and engagement data across all platforms.</p>
                 </div>
-                <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100 text-center p-3">
-                        <div class="py-3 text-primary fs-1">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="card-body">
-                            <h5>3. Content Analysis</h5>
-                            <p class="card-text">Our AI identifies key values, tone, and brand voice from the collected data.</p>
-                        </div>
+                <div class="bg-gray-900 rounded-xl p-6 text-center">
+                    <div class="text-primary text-4xl mb-4">
+                        <i class="fas fa-chart-line"></i>
                     </div>
+                    <h5 class="text-lg font-medium mb-2">3. Content Analysis</h5>
+                    <p class="text-gray-400">Our AI identifies key values, tone, and brand voice from the collected data.</p>
                 </div>
-                <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100 text-center p-3">
-                        <div class="py-3 text-primary fs-1">
-                            <i class="fas fa-feather-alt"></i>
-                        </div>
-                        <div class="card-body">
-                            <h5>4. Story Generation</h5>
-                            <p class="card-text">We craft a compelling brand narrative that captures the essence of the brand.</p>
-                        </div>
+                <div class="bg-gray-900 rounded-xl p-6 text-center">
+                    <div class="text-primary text-4xl mb-4">
+                        <i class="fas fa-feather-alt"></i>
                     </div>
+                    <h5 class="text-lg font-medium mb-2">4. Story Generation</h5>
+                    <p class="text-gray-400">We craft a compelling brand narrative that captures the essence of the brand.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="py-5 bg-light">
-        <div class="container">
-            <h2 class="text-center mb-5">Key Features</h2>
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100">
-                        <div class="card-body">
-                            <h5><i class="fas fa-bolt text-primary me-2"></i> Instant Brand Analysis</h5>
-                            <p class="card-text">Generate a complete brand profile in seconds, not days. Perfect for agencies, marketers, and founders who need quick insights.</p>
-                        </div>
-                    </div>
+    <section id="features" class="py-12 bg-gray-900">
+        <div class="container mx-auto px-4">
+            <h2 class="text-2xl font-bold mb-8 text-center">Key Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h5 class="flex items-center text-lg font-medium mb-3">
+                        <i class="fas fa-bolt text-primary mr-2"></i> 
+                        Instant Brand Analysis
+                    </h5>
+                    <p class="text-gray-400">Generate a complete brand profile in seconds, not days. Perfect for agencies, marketers, and founders who need quick insights.</p>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100">
-                        <div class="card-body">
-                            <h5><i class="fas fa-layer-group text-primary me-2"></i> Multi-Platform Integration</h5>
-                            <p class="card-text">Automatically detects and analyzes content from LinkedIn, Instagram, Twitter, Facebook, YouTube, and more.</p>
-                        </div>
-                    </div>
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h5 class="flex items-center text-lg font-medium mb-3">
+                        <i class="fas fa-layer-group text-primary mr-2"></i>
+                        Multi-Platform Integration
+                    </h5>
+                    <p class="text-gray-400">Automatically detects and analyzes content from LinkedIn, Instagram, Twitter, Facebook, YouTube, and more.</p>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100">
-                        <div class="card-body">
-                            <h5><i class="fas fa-paint-brush text-primary me-2"></i> Visual Identity Suggestions</h5>
-                            <p class="card-text">Get color palette, typography, and image style recommendations that match the brand's tone and values.</p>
-                        </div>
-                    </div>
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h5 class="flex items-center text-lg font-medium mb-3">
+                        <i class="fas fa-paint-brush text-primary mr-2"></i>
+                        Visual Identity Suggestions
+                    </h5>
+                    <p class="text-gray-400">Get color palette, typography, and image style recommendations that match the brand's tone and values.</p>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100">
-                        <div class="card-body">
-                            <h5><i class="fas fa-comments text-primary me-2"></i> Tone & Voice Analysis</h5>
-                            <p class="card-text">Understand how the brand communicates with its audience across different channels.</p>
-                        </div>
-                    </div>
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h5 class="flex items-center text-lg font-medium mb-3">
+                        <i class="fas fa-comments text-primary mr-2"></i>
+                        Tone & Voice Analysis
+                    </h5>
+                    <p class="text-gray-400">Understand how the brand communicates with its audience across different channels.</p>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100">
-                        <div class="card-body">
-                            <h5><i class="fas fa-bullseye text-primary me-2"></i> Key Value Identification</h5>
-                            <p class="card-text">Uncover the core values and principles that drive the brand's positioning and messaging.</p>
-                        </div>
-                    </div>
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h5 class="flex items-center text-lg font-medium mb-3">
+                        <i class="fas fa-bullseye text-primary mr-2"></i>
+                        Key Value Identification
+                    </h5>
+                    <p class="text-gray-400">Uncover the core values and principles that drive the brand's positioning and messaging.</p>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm border-0 rounded-4 h-100">
-                        <div class="card-body">
-                            <h5><i class="fas fa-sync text-primary me-2"></i> Consistency Scoring</h5>
-                            <p class="card-text">Measure how consistently the brand presents itself across different platforms and touchpoints.</p>
-                        </div>
-                    </div>
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h5 class="flex items-center text-lg font-medium mb-3">
+                        <i class="fas fa-sync text-primary mr-2"></i>
+                        Consistency Scoring
+                    </h5>
+                    <p class="text-gray-400">Measure how consistently the brand presents itself across different platforms and touchpoints.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="bg-white border-top py-3 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <p class="mb-0">&copy; 2025 Narratix. All rights reserved.</p>
-                </div>
-                <div class="col-md-6 text-end">
-                    <p class="mb-0">A hackathon project built with Flask & Bootstrap</p>
-                </div>
+    <footer class="border-t border-gray-800 py-6 mt-auto">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <p class="mb-2 md:mb-0">&copy; 2025 Narratix. All rights reserved.</p>
+                <p>A hackathon project built with Flask & Tailwind CSS</p>
             </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <!-- Showdown JS for Markdown rendering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     

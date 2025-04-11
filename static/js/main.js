@@ -4,29 +4,55 @@ document.addEventListener('DOMContentLoaded', function() {
     const websiteUrl = document.getElementById('websiteUrl');
     const loadingSpinner = document.getElementById('loadingSpinner');
     const progressBar = document.getElementById('progressBar');
+    const progressBarFill = progressBar.querySelector('div');
     const resultSection = document.getElementById('resultSection');
     
-    // Brand elements
-    const brandName = document.getElementById('brandName');
-    const brandDescription = document.getElementById('brandDescription');
-    const keyValues = document.getElementById('keyValues');
-    const socialLinks = document.getElementById('socialLinks');
-    const brandStoryContent = document.getElementById('brandStoryContent');
-    const toneAnalysis = document.getElementById('toneAnalysis');
-    const keyKeywords = document.getElementById('keyKeywords');
-    const colorPalette = document.getElementById('colorPalette');
-    const typography = document.getElementById('typography');
-    const imageStyle = document.getElementById('imageStyle');
-    const socialAnalytics = document.getElementById('socialAnalytics');
-    const consistencyScore = document.getElementById('consistencyScore');
-    const scoreCircle = document.getElementById('scoreCircle');
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (mobileMenuButton) {
+        mobileMenuButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+    
+    // Tab functionality
+    const tabButtons = document.querySelectorAll('.tab-button');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Deactivate all tabs
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('border-primary');
+                btn.classList.add('border-transparent', 'text-gray-400');
+            });
+            
+            // Activate clicked tab
+            this.classList.add('active', 'border-primary');
+            this.classList.remove('border-transparent', 'text-gray-400');
+            
+            // Hide all content
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.add('hidden');
+                pane.classList.remove('active');
+            });
+            
+            // Show selected content
+            const targetId = this.getAttribute('data-tab');
+            const targetPane = document.getElementById(targetId);
+            targetPane.classList.remove('hidden');
+            targetPane.classList.add('active');
+        });
+    });
     
     // Set up Markdown converter
     const converter = new showdown.Converter({
         tables: true,
         tasklists: true,
         strikethrough: true,
-        emoji: true
+        simpleLineBreaks: true
     });
     
     // Handle analyze button click
@@ -40,19 +66,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show loading state
         analyzeBtn.disabled = true;
-        loadingSpinner.classList.remove('d-none');
-        progressBar.classList.remove('d-none');
+        loadingSpinner.classList.remove('hidden');
+        progressBar.classList.remove('hidden');
         
-        // Update progress bar (simulated progress)
+        // Update progress bar
         let progress = 0;
         const progressInterval = setInterval(function() {
-            progress += 5;
-            progressBar.querySelector('.progress-bar').style.width = `${Math.min(progress, 95)}%`;
+            progress += 8;
+            progressBarFill.style.width = `${Math.min(progress, 95)}%`;
             
             if (progress >= 95) {
                 clearInterval(progressInterval);
             }
-        }, 500);
+        }, 300);
         
         // Send request to backend
         fetch('/analyze', {
@@ -70,9 +96,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             // Complete progress bar
-            progressBar.querySelector('.progress-bar').style.width = '100%';
+            progressBarFill.style.width = '100%';
             setTimeout(() => {
-                progressBar.classList.add('d-none');
+                progressBar.classList.add('hidden');
             }, 500);
             
             // Process and display results
@@ -80,10 +106,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Reset loading state
             analyzeBtn.disabled = false;
-            loadingSpinner.classList.add('d-none');
+            loadingSpinner.classList.add('hidden');
             
             // Show results section
-            resultSection.classList.remove('d-none');
+            resultSection.classList.remove('hidden');
             
             // Scroll to results
             resultSection.scrollIntoView({ behavior: 'smooth' });
@@ -94,198 +120,248 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Reset loading state
             analyzeBtn.disabled = false;
-            loadingSpinner.classList.add('d-none');
-            progressBar.classList.add('d-none');
+            loadingSpinner.classList.add('hidden');
+            progressBar.classList.add('hidden');
         });
     });
     
     // Function to display results
     function displayResults(data) {
-        // Display brand info
-        brandName.textContent = data.brand_name;
-        brandDescription.textContent = data.brand_description;
+        // Brand info
+        document.getElementById('brandName').textContent = data.brand_name || 'Brand Name';
+        document.getElementById('brandDescription').textContent = data.brand_description || 'No description available.';
         
-        // Display key values
-        keyValues.innerHTML = '';
-        data.key_values.forEach(value => {
-            const badge = document.createElement('span');
-            badge.className = 'value-badge';
-            badge.textContent = value;
-            keyValues.appendChild(badge);
-        });
+        // Consistency score
+        const score = data.consistency_score || 75;
+        document.getElementById('consistencyScore').textContent = score;
         
-        // Display social links
-        socialLinks.innerHTML = '';
-        data.social_links.forEach(social => {
-            const badge = document.createElement('a');
-            badge.className = `social-badge ${social.platform}`;
-            badge.href = social.url;
-            badge.target = '_blank';
-            
-            const icon = document.createElement('i');
-            
-            // Set appropriate icon class based on platform
-            if (social.platform === 'facebook') {
-                icon.className = 'fab fa-facebook-f';
-            } else if (social.platform === 'twitter') {
-                icon.className = 'fab fa-twitter';
-            } else if (social.platform === 'instagram') {
-                icon.className = 'fab fa-instagram';
-            } else if (social.platform === 'linkedin') {
-                icon.className = 'fab fa-linkedin-in';
-            } else if (social.platform === 'youtube') {
-                icon.className = 'fab fa-youtube';
-            } else if (social.platform === 'tiktok') {
-                icon.className = 'fab fa-tiktok';
-            } else if (social.platform === 'pinterest') {
-                icon.className = 'fab fa-pinterest-p';
-            } else if (social.platform === 'github') {
-                icon.className = 'fab fa-github';
-            } else if (social.platform === 'medium') {
-                icon.className = 'fab fa-medium-m';
-            } else {
-                icon.className = 'fas fa-link';
-            }
-            
-            badge.appendChild(icon);
-            badge.appendChild(document.createTextNode(` ${social.platform.charAt(0).toUpperCase() + social.platform.slice(1)}`));
-            socialLinks.appendChild(badge);
-        });
+        // Set score color
+        const scoreCircle = document.getElementById('scoreCircle');
         
-        // If no social links found
-        if (data.social_links.length === 0) {
-            const noBadge = document.createElement('span');
-            noBadge.className = 'social-badge';
-            noBadge.innerHTML = '<i class="fas fa-info-circle"></i> No social media links detected';
-            socialLinks.appendChild(noBadge);
-        }
-        
-        // Display brand story (convert markdown to HTML)
-        brandStoryContent.innerHTML = converter.makeHtml(data.brand_story);
-        
-        // Display tone analysis
-        toneAnalysis.innerHTML = '';
-        for (const tone of data.visual_profile.tone_indicators) {
-            const toneContainer = document.createElement('div');
-            toneContainer.className = 'mb-3';
-            
-            const toneBar = document.createElement('div');
-            toneBar.className = 'tone-bar';
-            toneBar.style.width = '100%';
-            toneBar.style.backgroundColor = getColorForTone(tone.name.toLowerCase());
-            
-            // Inner bar showing percentage
-            const innerBar = document.createElement('div');
-            innerBar.style.width = `${tone.value * 100}%`;
-            innerBar.style.height = '100%';
-            innerBar.style.backgroundColor = getColorForTone(tone.name.toLowerCase());
-            innerBar.style.borderRadius = '15px';
-            
-            const toneLabel = document.createElement('div');
-            toneLabel.className = 'tone-label';
-            toneLabel.textContent = tone.name;
-            
-            const toneValue = document.createElement('div');
-            toneValue.className = 'tone-value';
-            toneValue.textContent = `${Math.round(tone.value * 100)}%`;
-            
-            toneBar.appendChild(innerBar);
-            toneBar.appendChild(toneLabel);
-            toneBar.appendChild(toneValue);
-            toneContainer.appendChild(toneBar);
-            
-            toneAnalysis.appendChild(toneContainer);
-        }
-        
-        // Display keywords
-        keyKeywords.innerHTML = '';
-        data.keywords.forEach(keyword => {
-            const badge = document.createElement('span');
-            badge.className = 'keyword-badge';
-            badge.textContent = keyword;
-            keyKeywords.appendChild(badge);
-        });
-        
-        // Display color palette
-        colorPalette.innerHTML = '';
-        const colors = data.visual_profile.color_palette;
-        
-        for (const [name, color] of Object.entries(colors)) {
-            const colorContainer = document.createElement('div');
-            colorContainer.className = 'd-inline-block me-3 mb-3 text-center';
-            
-            const swatch = document.createElement('div');
-            swatch.className = 'color-swatch';
-            swatch.style.backgroundColor = color;
-            
-            const colorName = document.createElement('small');
-            colorName.textContent = `${name.charAt(0).toUpperCase() + name.slice(1)}: ${color}`;
-            
-            colorContainer.appendChild(swatch);
-            colorContainer.appendChild(colorName);
-            colorPalette.appendChild(colorContainer);
-        }
-        
-        // Display typography
-        typography.innerHTML = `
-            <p><strong>Heading Font:</strong> ${data.visual_profile.font_style.heading}</p>
-            <p><strong>Body Font:</strong> ${data.visual_profile.font_style.body}</p>
-            <p><strong>Style Notes:</strong> ${data.visual_profile.font_style.style}</p>
-        `;
-        
-        // Display image style
-        imageStyle.textContent = data.visual_profile.image_style;
-        
-        // Display social analytics
-        socialAnalytics.innerHTML = '';
-        data.social_analytics.forEach(social => {
-            const row = document.createElement('tr');
-            
-            const platformCell = document.createElement('td');
-            platformCell.innerHTML = `<strong>${social.platform}</strong>`;
-            
-            const followersCell = document.createElement('td');
-            followersCell.textContent = social.followers;
-            
-            const engagementCell = document.createElement('td');
-            engagementCell.textContent = social.engagement;
-            
-            const frequencyCell = document.createElement('td');
-            frequencyCell.textContent = social.frequency;
-            
-            row.appendChild(platformCell);
-            row.appendChild(followersCell);
-            row.appendChild(engagementCell);
-            row.appendChild(frequencyCell);
-            
-            socialAnalytics.appendChild(row);
-        });
-        
-        // Display consistency score
-        consistencyScore.textContent = data.consistency_score;
-        
-        // Set score circle color
-        if (data.consistency_score >= 85) {
-            scoreCircle.className = 'score-circle excellent';
-        } else if (data.consistency_score >= 70) {
-            scoreCircle.className = 'score-circle good';
-        } else if (data.consistency_score >= 50) {
-            scoreCircle.className = 'score-circle average';
+        if (score >= 85) {
+            scoreCircle.className = 'w-20 h-20 rounded-full border-4 border-cyan-500 flex items-center justify-center mx-auto';
+        } else if (score >= 70) {
+            scoreCircle.className = 'w-20 h-20 rounded-full border-4 border-teal-500 flex items-center justify-center mx-auto';
+        } else if (score >= 50) {
+            scoreCircle.className = 'w-20 h-20 rounded-full border-4 border-yellow-500 flex items-center justify-center mx-auto';
         } else {
-            scoreCircle.className = 'score-circle needs-work';
+            scoreCircle.className = 'w-20 h-20 rounded-full border-4 border-red-500 flex items-center justify-center mx-auto';
         }
-    }
-    
-    // Helper function to get color for tone
-    function getColorForTone(tone) {
-        const toneColors = {
-            'professional': '#0A3D62',
-            'friendly': '#5E8C61',
-            'informative': '#3A6EA5',
-            'enthusiastic': '#E63946',
-            'formal': '#2D3142'
-        };
         
-        return toneColors[tone] || '#4361ee';
+        // Key values
+        const keyValues = document.getElementById('keyValues');
+        keyValues.innerHTML = '';
+        
+        if (data.key_values && data.key_values.length > 0) {
+            data.key_values.forEach(value => {
+                const badge = document.createElement('span');
+                badge.className = 'bg-opacity-20 bg-primary text-white px-3 py-1 rounded-full text-sm';
+                badge.textContent = value;
+                keyValues.appendChild(badge);
+            });
+        } else {
+            keyValues.innerHTML = '<span class="text-gray-500">No key values available</span>';
+        }
+        
+        // Social links
+        const socialLinks = document.getElementById('socialLinks');
+        socialLinks.innerHTML = '';
+        
+        if (data.social_links && data.social_links.length > 0) {
+            data.social_links.forEach(social => {
+                const badge = document.createElement('a');
+                badge.href = social.url;
+                badge.target = '_blank';
+                badge.className = `social-badge flex items-center bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded-full text-sm transition ${social.platform}`;
+                
+                const icon = document.createElement('i');
+                
+                // Set icon class based on platform
+                switch(social.platform) {
+                    case 'facebook': icon.className = 'fab fa-facebook-f mr-2'; break;
+                    case 'twitter': icon.className = 'fab fa-twitter mr-2'; break;
+                    case 'instagram': icon.className = 'fab fa-instagram mr-2'; break;
+                    case 'linkedin': icon.className = 'fab fa-linkedin-in mr-2'; break;
+                    case 'youtube': icon.className = 'fab fa-youtube mr-2'; break;
+                    case 'tiktok': icon.className = 'fab fa-tiktok mr-2'; break;
+                    case 'pinterest': icon.className = 'fab fa-pinterest-p mr-2'; break;
+                    default: icon.className = 'fas fa-link mr-2';
+                }
+                
+                badge.appendChild(icon);
+                badge.appendChild(document.createTextNode(social.platform));
+                socialLinks.appendChild(badge);
+            });
+        } else {
+            socialLinks.innerHTML = '<span class="text-gray-500">No social media links detected</span>';
+        }
+        
+        // Brand story content - Fix markdown rendering
+        const brandStoryContent = document.getElementById('brandStoryContent');
+        
+        if (data.brand_story) {
+            // Clean up markdown before rendering
+            let cleanMarkdown = data.brand_story
+                .replace(/\\n/g, '\n')
+                .replace(/\n{3,}/g, '\n\n');
+            
+            // Convert markdown to HTML
+            brandStoryContent.innerHTML = converter.makeHtml(cleanMarkdown);
+            
+            // Fix any links to open in new tab
+            brandStoryContent.querySelectorAll('a').forEach(link => {
+                link.setAttribute('target', '_blank');
+                link.setAttribute('rel', 'noopener');
+            });
+        } else {
+            brandStoryContent.innerHTML = '<p class="text-gray-500">No brand story available.</p>';
+        }
+        
+        // Keywords
+        const keyKeywords = document.getElementById('keyKeywords');
+        keyKeywords.innerHTML = '';
+        
+        if (data.keywords && data.keywords.length > 0) {
+            data.keywords.forEach(keyword => {
+                const badge = document.createElement('span');
+                badge.className = 'bg-gray-800 text-white px-3 py-1 rounded-full text-sm';
+                badge.textContent = keyword;
+                keyKeywords.appendChild(badge);
+            });
+        } else {
+            keyKeywords.innerHTML = '<span class="text-gray-500">No keywords available</span>';
+        }
+        
+        // Tone analysis
+        const toneAnalysis = document.getElementById('toneAnalysis');
+        toneAnalysis.innerHTML = '';
+        
+        if (data.visual_profile && data.visual_profile.tone_indicators) {
+            data.visual_profile.tone_indicators.forEach(tone => {
+                const container = document.createElement('div');
+                container.className = 'mb-3';
+                
+                const labelContainer = document.createElement('div');
+                labelContainer.className = 'flex justify-between text-sm mb-1';
+                
+                const nameLabel = document.createElement('span');
+                nameLabel.textContent = tone.name;
+                
+                const valueLabel = document.createElement('span');
+                valueLabel.textContent = `${Math.round(tone.value * 100)}%`;
+                
+                labelContainer.appendChild(nameLabel);
+                labelContainer.appendChild(valueLabel);
+                
+                const toneBar = document.createElement('div');
+                toneBar.className = 'tone-bar';
+                
+                const fillBar = document.createElement('div');
+                fillBar.className = 'tone-bar-fill';
+                fillBar.style.width = `${tone.value * 100}%`;
+                
+                toneBar.appendChild(fillBar);
+                
+                container.appendChild(labelContainer);
+                container.appendChild(toneBar);
+                toneAnalysis.appendChild(container);
+            });
+        } else {
+            toneAnalysis.innerHTML = '<p class="text-gray-500">No tone analysis available</p>';
+        }
+        
+        // Color palette
+        const colorPalette = document.getElementById('colorPalette');
+        colorPalette.innerHTML = '';
+        
+        if (data.visual_profile && data.visual_profile.color_palette) {
+            const colors = data.visual_profile.color_palette;
+            
+            for (const [name, color] of Object.entries(colors)) {
+                const colorContainer = document.createElement('div');
+                colorContainer.className = 'text-center';
+                
+                const swatch = document.createElement('div');
+                swatch.className = 'w-8 h-8 rounded';
+                swatch.style.backgroundColor = color;
+                swatch.style.border = '1px solid rgba(255,255,255,0.2)';
+                
+                const colorName = document.createElement('div');
+                colorName.className = 'text-xs mt-1';
+                colorName.textContent = `${name}: ${color}`;
+                
+                colorContainer.appendChild(swatch);
+                colorContainer.appendChild(colorName);
+                colorPalette.appendChild(colorContainer);
+            }
+        } else {
+            colorPalette.innerHTML = '<p class="text-gray-500">No color palette available</p>';
+        }
+        
+        // Typography
+        const typography = document.getElementById('typography');
+        
+        if (data.visual_profile && data.visual_profile.font_style) {
+            const fontStyle = data.visual_profile.font_style;
+            typography.innerHTML = `
+                <p class="mb-2"><strong>Heading Font:</strong> ${fontStyle.heading}</p>
+                <p><strong>Body Font:</strong> ${fontStyle.body}</p>
+            `;
+        } else {
+            typography.innerHTML = '<p class="text-gray-500">No typography information available</p>';
+        }
+        
+        // Image style
+        const imageStyle = document.getElementById('imageStyle');
+        
+        if (data.visual_profile && data.visual_profile.image_style) {
+            imageStyle.textContent = data.visual_profile.image_style;
+            imageStyle.className = '';
+        } else {
+            imageStyle.textContent = 'No image style recommendations available';
+            imageStyle.className = 'text-gray-500';
+        }
+        
+        // Social analytics
+        const socialAnalytics = document.getElementById('socialAnalytics');
+        socialAnalytics.innerHTML = '';
+        
+        if (data.social_analytics && data.social_analytics.length > 0) {
+            data.social_analytics.forEach((social, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-gray-800' : '';
+                
+                const platformCell = document.createElement('td');
+                platformCell.className = 'py-3 px-4';
+                platformCell.innerHTML = `<strong>${social.platform}</strong>`;
+                
+                const followersCell = document.createElement('td');
+                followersCell.className = 'py-3 px-4';
+                followersCell.textContent = social.followers || 'N/A';
+                
+                const engagementCell = document.createElement('td');
+                engagementCell.className = 'py-3 px-4';
+                engagementCell.textContent = social.engagement || 'N/A';
+                
+                const frequencyCell = document.createElement('td');
+                frequencyCell.className = 'py-3 px-4';
+                frequencyCell.textContent = social.frequency || 'N/A';
+                
+                row.appendChild(platformCell);
+                row.appendChild(followersCell);
+                row.appendChild(engagementCell);
+                row.appendChild(frequencyCell);
+                
+                socialAnalytics.appendChild(row);
+            });
+        } else {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = 4;
+            cell.className = 'py-3 px-4 text-center text-gray-500';
+            cell.textContent = 'No social analytics available.';
+            row.appendChild(cell);
+            socialAnalytics.appendChild(row);
+        }
     }
 });
