@@ -1,17 +1,5 @@
-#!/usr/bin/env python
-"""
-BrandDecoder - Website to Brand Story Generator
-
-A Flask application that crawls websites, extracts social media links,
-analyzes content across platforms, and generates comprehensive brand stories.
-
-Author: [Your Name]
-Created for: Hackathon Project
-"""
-
 import os
 import logging
-import json
 from urllib.parse import urlparse
 from flask import Flask, render_template, request, jsonify
 import traceback
