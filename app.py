@@ -14,12 +14,10 @@ from utils.generator import (
 # Initialize Flask app
 app = Flask(__name__)
 
-
 @app.route("/")
 def index():
     """Render the main page"""
     return render_template("index.html")
-
 
 @app.route("/analyze", methods=["POST"])
 def analyze_website():
@@ -34,151 +32,77 @@ def analyze_website():
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
-    # Initialize with defaults in case of failure
-    domain = urlparse(url).netloc
-    default_brand_name = domain.replace("www.", "")
-    default_brand_name = default_brand_name.split(".")[0].capitalize()
-
-    # Initialize empty result structure with default values
-    result = {
-        "brand_name": default_brand_name,
-        "brand_description": f"Website for {default_brand_name}",
-        "social_links": [],
-        "social_analytics": [],
-        "key_values": ["Quality", "Innovation", "Service", "Excellence", "Integrity"],
-        "tone_analysis": {
-            "professional": 0.7,
-            "friendly": 0.4,
-            "informative": 0.6,
-            "enthusiastic": 0.3,
-            "formal": 0.5,
-        },
-        "keywords": ["professional", "service", "quality", "experience", "solution"],
-        "brand_story": f"# {default_brand_name}: Brand Story\n\n## Overview\n\n{default_brand_name} is a brand focused on delivering quality products and services.",
-        "visual_profile": {
-            "color_palette": {
-                "primary": "#0A3D62",
-                "secondary": "#3E92CC",
-                "accent": "#D8D8D8",
-                "neutral": "#F5F5F5",
-                "highlight": "#2E86AB",
-            },
-            "font_style": {
-                "heading": "Montserrat or Georgia",
-                "body": "Open Sans or Roboto",
-                "style": "Clean, structured typography with proper hierarchy",
-            },
-            "image_style": "Polished, high-quality photography with clean compositions.",
-            "tone_indicators": [
-                {"name": "Professional", "value": 0.7},
-                {"name": "Informative", "value": 0.6},
-                {"name": "Friendly", "value": 0.4},
-            ],
-        },
-        "consistency_score": 70,
-    }
-
     try:
-        # Step 1: Extract social media links with error handling
-        try:
-            social_links = extract_social_links(url)
-            result["social_links"] = social_links
-        except Exception as e:
-            # Continue with empty social_links from default result
-            pass
+        # Step 1: Extract basic website content
+        website_content = extract_website_content(url)
+        brand_name = website_content.get("brand_name", "Brand")
+        
+        # Step 2: Extract social media links
+        social_links = extract_social_links(url)
+        
+        # Step 3: Get social media content
+        social_content = extract_social_content(social_links)
+        
+        # Step 4: Analyze content
+        analysis = analyze_content(website_content, social_content)
+        
+        # Step 5: Generate brand story and visual profile
+        brand_story = generate_brand_story(brand_name, website_content.get("description", ""), analysis, social_content)
+        visual_profile = generate_visual_profile(analysis)
+        consistency_score = generate_consistency_score(website_content, social_content, analysis)
+        
+        # Extract social analytics for display
+        social_analytics = []
+        for social in social_content:
+            social_analytics.append({
+                "platform": social["platform"],
+                "followers": social.get("followers", "N/A"),
+                "engagement": social.get("engagement", "Medium"),
+                "frequency": social.get("frequency", "Weekly"),
+            })
 
-        # Step 2: Extract website content with error handling
-        try:
-            website_content = extract_website_content(url)
-            # Update result with website content
-            result["brand_name"] = website_content.get("brand_name", default_brand_name)
-            result["brand_description"] = website_content.get(
-                "description", result["brand_description"]
-            )
-        except Exception as e:
-            # Continue with default website content
-            website_content = {
-                "brand_name": result["brand_name"],
-                "description": result["brand_description"],
-                "content": "",
-            }
-
-        # Step 3: Fetch social media content with error handling
-        social_content = []
-        try:
-            social_content = extract_social_content(result["social_links"])
-            # Extract social analytics
-            social_analytics = []
-            for social in social_content:
-                try:
-                    social_analytics.append(
-                        {
-                            "platform": social["platform"],
-                            "followers": social.get("followers", "N/A"),
-                            "engagement": social.get("engagement", "N/A"),
-                            "frequency": social.get("frequency", "N/A"),
-                        }
-                    )
-                except Exception:
-                    continue
-
-            result["social_analytics"] = social_analytics
-        except Exception as e:
-            # Continue with empty social_content
-            pass
-
-        # Step 4: Analyze the content with error handling
-        try:
-            analysis = analyze_content(website_content, social_content)
-            # Update result with analysis
-            result["key_values"] = analysis.get("key_values", result["key_values"])
-            result["tone_analysis"] = analysis.get(
-                "tone_analysis", result["tone_analysis"]
-            )
-            result["keywords"] = analysis.get("keywords", result["keywords"])
-        except Exception as e:
-            # Continue with default analysis from result
-            analysis = {
-                "keywords": result["keywords"],
-                "tone_analysis": result["tone_analysis"],
-                "key_values": result["key_values"],
-                "sentiment": {"polarity": 0.1, "subjectivity": 0.3},
-            }
-
-        # Step 5: Generate the brand story with error handling
-        try:
-            brand_story = generate_brand_story(
-                result["brand_name"],
-                result["brand_description"],
-                analysis,
-                social_content,
-            )
-            result["brand_story"] = brand_story
-        except Exception as e:
-            # Create a simple brand story as fallback (already in result defaults)
-            pass
-
-        # Step 6: Generate visual profile data with error handling
-        try:
-            visual_profile = generate_visual_profile(analysis)
-            result["visual_profile"] = visual_profile
-        except Exception as e:
-            # Continue with default visual profile
-            pass
-
-        # Step 7: Calculate consistency score with error handling
-        try:
-            consistency_score = generate_consistency_score(
-                website_content, social_content, analysis
-            )
-            result["consistency_score"] = consistency_score
-        except Exception as e:
-            # Continue with default consistency score
-            pass
-
-        return jsonify(result)
+        # Return the results
+        return jsonify({
+            "brand_name": brand_name,
+            "brand_description": website_content.get("description", ""),
+            "social_links": social_links,
+            "social_analytics": social_analytics,
+            "key_values": analysis.get("key_values", []),
+            "keywords": analysis.get("keywords", []),
+            "tone_analysis": analysis.get("tone_analysis", {}),
+            "brand_story": brand_story,
+            "visual_profile": visual_profile,
+            "consistency_score": consistency_score,
+        })
 
     except Exception as e:
-        # Return our default result with the error message
-        result["error"] = str(e)
-        return jsonify(result)
+        # Create basic response with error message
+        domain = urlparse(url).netloc
+        default_brand_name = domain.replace("www.", "").split(".")[0].capitalize()
+        
+        return jsonify({
+            "brand_name": default_brand_name,
+            "brand_description": f"Website for {default_brand_name}",
+            "error": str(e),
+            "social_links": [],
+            "social_analytics": [],
+            "key_values": ["Quality", "Innovation", "Service", "Excellence", "Integrity"],
+            "keywords": ["professional", "service", "quality", "experience", "solution"],
+            "tone_analysis": {
+                "professional": 0.7,
+                "friendly": 0.4,
+                "informative": 0.6,
+            },
+            "brand_story": f"# {default_brand_name}: Brand Story\n\nUnable to generate complete brand story.",
+            "visual_profile": {
+                "color_palette": {
+                    "primary": "#0A3D62",
+                    "secondary": "#3E92CC",
+                    "accent": "#D8D8D8",
+                }
+            },
+            "consistency_score": 70,
+        })
+
+if __name__ == "__main__":
+    app.run(debug=True)

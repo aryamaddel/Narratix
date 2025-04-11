@@ -1,17 +1,9 @@
-"""
-Specialized API helpers for social media data extraction
-"""
-
 import requests
 import json
 import re
-import time
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs
-import base64
-import hmac
-import hashlib
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 import os 
 
 # Twitter API v2 helpers
