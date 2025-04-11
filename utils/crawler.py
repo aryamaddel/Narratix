@@ -1,5 +1,3 @@
-# --- START OF FILE crawler.py ---
-
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -919,6 +917,3 @@ def extract_website_content(url):
             "description": f"Website for {default_brand_name}",
             "content": f"{default_brand_name} is a professional organization providing high-quality services and solutions to customers. Our focus is on quality, innovation, and excellence in everything we do.",
         }
-
-
-# --- END OF FILE crawler.py ---

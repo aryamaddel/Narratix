@@ -1,5 +1,3 @@
-# --- START OF FILE social.py ---
-
 import requests
 import re
 import time
@@ -1181,6 +1179,3 @@ def extract_social_content(social_links):
     social_content.sort(key=lambda x: x.get("platform", ""))
 
     return social_content
-
-
-# --- END OF FILE social.py ---

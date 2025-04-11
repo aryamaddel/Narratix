@@ -1,7 +1,4 @@
-# --- START OF FILE generator.py ---
-
 import random
-import re
 import os
 import json
 from typing import Dict, List, Any, Optional
@@ -807,6 +804,3 @@ def generate_consistency_score(website_content, social_content, analysis):
         return int(score)
     except Exception as e:
         return 70  # Return default score
-
-
-# --- END OF FILE generator.py ---

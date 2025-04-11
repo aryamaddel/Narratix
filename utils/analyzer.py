@@ -1,13 +1,3 @@
-# --- START OF FILE analyzer.py ---
-
-#!/usr/bin/env python
-"""
-Content Analyzer Module for BrandDecoder
-
-This module analyzes website and social media content to extract
-keywords, tone, sentiment, and brand values.
-"""
-
 import re
 import string
 from collections import Counter
@@ -990,6 +980,3 @@ def analyze_content(website_content, social_content):
 
     except Exception as e:
         return defaults
-
-
-# --- END OF FILE analyzer.py ---
